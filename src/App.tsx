@@ -1,4 +1,4 @@
-import { FormEvent, createContext, useContext, useEffect, useMemo, useState } from "react";
+import { FormEvent, createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity, ArrowRight, ArrowUpRight, Award, Bell, BookOpen, BookMarked, Building2, CalendarDays,
   ChartNoAxesCombined, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp,
@@ -184,11 +184,49 @@ function PublicLink({to,navigate,children,className="",onAfterNavigate}:{to:stri
 }
 const PUBLIC_LINKS=[{to:"/about",label:"About AUPES"},{to:"/how-it-works",label:"How it works"},{to:"/scoring",label:"Scoring"},{to:"/privacy",label:"Privacy"},{to:"/contact",label:"Contact"}];
 
+const LANGUAGE_OPTIONS:{code:LanguageCode;native:string;english:string;htmlLang:string}[]=[
+ {code:"en",native:"English",english:"English",htmlLang:"en"},
+ {code:"am",native:"አማርኛ",english:"Amharic",htmlLang:"am"},
+ {code:"om",native:"Afaan Oromoo",english:"Afaan Oromo",htmlLang:"om"},
+ {code:"ti",native:"ትግርኛ",english:"Tigrinya",htmlLang:"ti"}
+];
 function AppSettingsMenu({workspace=false}:{workspace?:boolean}){
  const {theme,setTheme,language,setLanguage,t}=useAppSettings();
  const [settingsOpen,setSettingsOpen]=useState(false);
- return <div className={cx("settings-control",workspace&&"workspace-settings-control")}><button className="nav-settings-button" type="button" aria-label={t("Settings")} aria-expanded={settingsOpen} title={t("Settings")} onClick={()=>setSettingsOpen(v=>!v)}><Settings size={17}/></button>{settingsOpen&&<div className="settings-popover" role="dialog" aria-label={t("Site settings")}><div className="settings-popover-heading"><Settings size={15}/><strong>{t("Site settings")}</strong></div><div className="settings-section-label">{t("Appearance")}</div><div className="settings-option-row"><button type="button" className={cx("settings-option",theme==="light"&&"settings-option-active")} aria-pressed={theme==="light"} onClick={()=>setTheme("light")}><Sun size={15}/>{t("Light")}</button><button type="button" className={cx("settings-option",theme==="dark"&&"settings-option-active")} aria-pressed={theme==="dark"} onClick={()=>setTheme("dark")}><Moon size={15}/>{t("Dark")}</button></div><label className="settings-language-label"><span><Languages size={15}/>{t("Language")}</span><select value={language} onChange={e=>setLanguage(e.target.value as LanguageCode)} aria-label={t("Choose a language")}><option value="en">English</option><option value="am">አማርኛ · Amharic</option><option value="om">Afaan Oromoo · Afaan Oromo</option><option value="ti">ትግርኛ · Tigrinya</option></select></label><p className="settings-hint">{t("Changes apply immediately.")}</p></div>}</div>;
+ const settingsRef=useRef<HTMLDivElement|null>(null);
+ useEffect(()=>{
+  if(!settingsOpen)return;
+  const handlePointerDown=(event:PointerEvent)=>{
+   const target=event.target;
+   if(target instanceof Node&&!settingsRef.current?.contains(target))setSettingsOpen(false);
+  };
+  const handleKeyDown=(event:KeyboardEvent)=>{if(event.key==="Escape")setSettingsOpen(false)};
+  document.addEventListener("pointerdown",handlePointerDown);
+  document.addEventListener("keydown",handleKeyDown);
+  return ()=>{document.removeEventListener("pointerdown",handlePointerDown);document.removeEventListener("keydown",handleKeyDown)};
+ },[settingsOpen]);
+ return <div ref={settingsRef} className={cx("settings-control",workspace&&"workspace-settings-control")}>
+  <button className="nav-settings-button" type="button" aria-label={t("Settings")} aria-expanded={settingsOpen} title={t("Settings")} aria-haspopup="dialog" onClick={()=>setSettingsOpen(v=>!v)}><Settings size={17}/></button>
+  {settingsOpen&&<div className="settings-popover" role="dialog" aria-label={t("Site settings")}>
+   <div className="settings-popover-heading"><Settings size={16}/><div><strong>{t("Site settings")}</strong><small>{t("Personalize your experience")}</small></div></div>
+   <section className="settings-section" aria-labelledby="settings-appearance-label">
+    <div id="settings-appearance-label" className="settings-section-label">{t("Appearance")}</div>
+    <div className="settings-option-row">
+     <button type="button" className={cx("settings-option",theme==="light"&&"settings-option-active")} aria-pressed={theme==="light"} onClick={()=>setTheme("light")}><Sun size={16}/><span>{t("Light")}</span>{theme==="light"&&<Check className="settings-selected-check" size={14}/>}</button>
+     <button type="button" className={cx("settings-option",theme==="dark"&&"settings-option-active")} aria-pressed={theme==="dark"} onClick={()=>setTheme("dark")}><Moon size={16}/><span>{t("Dark")}</span>{theme==="dark"&&<Check className="settings-selected-check" size={14}/>}</button>
+    </div>
+   </section>
+   <section className="settings-section" aria-labelledby="settings-language-label">
+    <div id="settings-language-label" className="settings-section-label"><Languages size={15}/>{t("Language")}</div>
+    <div className="settings-language-list" role="group" aria-label={t("Choose a language")}>
+     {LANGUAGE_OPTIONS.map(option=><button key={option.code} type="button" className={cx("settings-language-option",language===option.code&&"settings-language-option-active")} aria-pressed={language===option.code} onClick={()=>setLanguage(option.code)}><span className="settings-language-copy"><span className="settings-language-native" lang={option.htmlLang}>{option.native}</span><small>{option.english}</small></span>{language===option.code&&<Check size={16} className="settings-selected-check"/>}</button>)}
+    </div>
+   </section>
+   <p className="settings-hint">{t("Changes apply immediately.")}</p>
+  </div>}
+ </div>;
 }
+
 function PublicHeader({route,navigate}:{route:string;navigate:(to:string)=>void}){
  const {t}=useAppSettings();
  const [menuOpen,setMenuOpen]=useState(false);
