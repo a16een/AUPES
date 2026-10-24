@@ -15,7 +15,7 @@ Deno.serve(async(req:Request)=>{
   const {data:actor,error:actorError}=await adminClient.from("profiles").select("role,is_active").eq("id",user.id).maybeSingle();if(actorError||!actor||actor.role!=="admin"||!actor.is_active)return json({error:"Only active AUPES administrators can create accounts."},403);
   const body=await req.json();const full_name=String(body.full_name??"").trim();const email=String(body.email??"").trim().toLowerCase();const password=String(body.password??"");const role=String(body.role??"");const department=String(body.department??"").trim()||null;const college=String(body.college??"").trim()||null;
   if(full_name.length<2||full_name.length>120)return json({error:"Enter a full name between 2 and 120 characters."},400);
-  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||email.length>254)return json({error:"Enter a valid university email address."},400);
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)return json({error:"Enter a valid university email address."},400);
   if(password.length<8||password.length>128)return json({error:"Temporary password must contain at least 8 characters."},400);
   if(!roles.has(role))return json({error:"Choose a supported AUPES role."},400);
   const {data:created,error:createError}=await adminClient.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name}});if(createError||!created.user)return json({error:createError?.message??"Supabase could not create the account."},400);
