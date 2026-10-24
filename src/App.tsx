@@ -40,8 +40,9 @@ function PublicHeader({route,navigate}:{route:string;navigate:(to:string)=>void}
  return <header className="site-nav public-header container">
   <div className="nav-island nav-brand-island"><PublicLink to="/" navigate={navigate} className="university-brand-link"><span className="university-logo-box"><img src="/images/logo.png" alt="Ambo University logo" onError={e=>{e.currentTarget.style.display="none"}}/><span className="logo-fallback"><GraduationCap size={25}/></span></span></PublicLink></div>
   <button className="public-menu-toggle icon-btn" type="button" aria-label={menuOpen?"Close menu":"Open menu"} aria-expanded={menuOpen} onClick={()=>setMenuOpen(v=>!v)}><Menu size={19}/></button>
-  <nav className={cx("nav-island","nav-links-island",menuOpen&&"public-nav-open")} aria-label="Main navigation">{links.map(link=><PublicLink key={link.to} to={link.to} navigate={navigate} onAfterNavigate={closeMenu} className={route===link.to?"nav-link-active":""}>{link.label}</PublicLink>)}</nav>
   <div className="nav-island nav-tools-island"><div className="settings-control"><button className="nav-settings-button" type="button" aria-label="Settings" aria-expanded={settingsOpen} title="Settings" onClick={()=>setSettingsOpen(v=>!v)}><Settings size={17}/></button>{settingsOpen&&<div className="settings-popover"><strong>Site settings</strong><span>Personalization options are coming soon.</span><button type="button" onClick={()=>setSettingsOpen(false)}>Close</button></div>}</div><span className="nav-action-divider"/><PublicLink to="/sign-in" navigate={navigate} className="navbar-signin" onAfterNavigate={closeMenu}><UserRound size={16}/><span>Sign in</span></PublicLink></div>
+  <nav className={cx("nav-island","nav-links-island",menuOpen&&"public-nav-open")} aria-label="Main navigation">{links.map(link=><PublicLink key={link.to} to={link.to} navigate={navigate} onAfterNavigate={closeMenu} className={route===link.to?"nav-link-active":""}>{link.label}</PublicLink>)}</nav>
+
  </header>;
 }
 function PublicFooter({navigate}:{navigate:(to:string)=>void}){
