@@ -1,10 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
-  Activity, ArrowRight, Award, Bell, BookOpen, BookMarked, Building2, CalendarDays,
+  Activity, ArrowRight, ArrowUpRight, Award, Bell, BookOpen, BookMarked, Building2, CalendarDays,
   ChartNoAxesCombined, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp,
-  ClipboardCheck, Clock3, ExternalLink, FileText, Globe2, GraduationCap,
+  ClipboardCheck, Clock3, ExternalLink, FileText, FlaskConical, Globe2, GraduationCap,
   LayoutDashboard, LoaderCircle, LockKeyhole, LogOut, Mail, MapPin, Menu, Plus,
-  Scale, Search, ShieldCheck, Sparkles, Users, X
+  Scale, Search, ShieldCheck, Sparkles, Sprout, Users, X
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, SUPABASE_KEY, SUPABASE_URL } from "./lib/supabase";
@@ -37,7 +37,7 @@ function PublicHeader({route,navigate}:{route:string;navigate:(to:string)=>void}
  const [menuOpen,setMenuOpen]=useState(false);
  const closeMenu=()=>setMenuOpen(false);
  return <><div className="university-topline"><div className="container university-topline-inner"><span><i/> Better future through knowledge and wisdom</span><div><a href="https://ambou.edu.et/" target="_blank" rel="noreferrer"><Globe2 size={13}/> Official university website <ExternalLink size={11}/></a><span className="topline-divider"/><span><MapPin size={13}/> Ambo, Ethiopia</span></div></div></div><header className="site-nav public-header container">
-  <div className="nav-island nav-brand-island"><PublicLink to="/" navigate={navigate} className="university-brand-link" aria-label="AUPES home"><span className="university-logo-box"><GraduationCap size={30}/><img src="/images/logo.png" alt="Ambo University logo" onError={e=>{e.currentTarget.style.display="none"}}/></span><span className="university-brand-copy"><strong>AMBO UNIVERSITY</strong><small>Academic excellence · Community impact</small><em>AUPES <i/> PERFORMANCE EVALUATION</em></span></PublicLink></div>
+  <div className="nav-island nav-brand-island"><PublicLink to="/" navigate={navigate} className="university-brand-link"><span className="university-logo-box"><GraduationCap size={30}/><img src="/images/logo.png" alt="Ambo University logo" onError={e=>{e.currentTarget.style.display="none"}}/></span><span className="university-brand-copy"><strong>AMBO UNIVERSITY</strong><small>Academic excellence · Community impact</small><em>AUPES <i/> PERFORMANCE EVALUATION</em></span></PublicLink></div>
   <button className="public-menu-toggle icon-btn" type="button" aria-label={menuOpen?"Close menu":"Open menu"} aria-expanded={menuOpen} onClick={()=>setMenuOpen(v=>!v)}><Menu size={19}/></button>
   <nav className={cx("nav-island","nav-links-island",menuOpen&&"public-nav-open")} aria-label="Main navigation"><PublicLink to="/" navigate={navigate} onAfterNavigate={closeMenu} className={route==="/"?"nav-link-active":""}>Home</PublicLink><a href="https://ambou.edu.et/about-ambo-university/" target="_blank" rel="noreferrer" onClick={closeMenu}>University <ExternalLink size={11}/></a><a href="https://ambou.edu.et/programs/" target="_blank" rel="noreferrer" onClick={closeMenu}>Academics <ExternalLink size={11}/></a><a href="https://ambou.edu.et/research-and-community-service-vp/" target="_blank" rel="noreferrer" onClick={closeMenu}>Research <ExternalLink size={11}/></a><a href="https://ambou.edu.et/latest-posts/" target="_blank" rel="noreferrer" onClick={closeMenu}>News & events <ExternalLink size={11}/></a></nav>
   <div className="nav-island nav-tools-island"><PublicLink to="/contact" navigate={navigate} className="nav-contact-link" onAfterNavigate={closeMenu}>Contact</PublicLink><Button onClick={()=>{closeMenu();navigate("/sign-in")}}><span className="portal-button-icon"><LockKeyhole size={14}/></span> AUPES portal <ArrowRight size={14}/></Button></div>
