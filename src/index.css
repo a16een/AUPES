@@ -1296,3 +1296,206 @@
   .auth-page .auth-layout{width:calc(100% - 28px);padding:20px 0}
   .auth-page .auth-form-panel{padding:24px 18px}
 }
+
+/* Functional appearance and language settings popover */
+.settings-popover{
+  right:-118px;
+  top:43px;
+  width:min(286px,calc(100vw - 24px));
+  padding:16px;
+  gap:12px;
+  color:#294a34;
+}
+.settings-popover-heading{display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid #e8eee4;color:#325c3d}
+.settings-popover-heading svg{color:#6b866b}
+.settings-popover-heading strong{font:800 12px Manrope,sans-serif;color:inherit}
+.settings-section-label{font-size:9px;font-weight:800;letter-spacing:.5px;color:#829080;margin-top:1px}
+.settings-option-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.settings-option{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  min-height:39px;padding:8px 10px;border:1px solid #e1e9dc;border-radius:9px;
+  background:#fbfcfa;color:#617363;font-size:10px;font-weight:750;
+  transition:background .16s,border-color .16s,color .16s;
+}
+.settings-option:hover{border-color:#b9cdb4;background:#f0f5ec}
+.settings-option-active{background:#eaf3e5;border-color:#91b18a;color:#26583a;box-shadow:inset 0 0 0 1px #91b18a40}
+.settings-language-label{display:flex;flex-direction:column;gap:8px;color:#829080;font-size:9px;font-weight:800}
+.settings-language-label>span{display:flex;align-items:center;gap:7px;color:#526c56}
+.settings-language-label select{
+  width:100%;min-height:40px;padding:8px 10px;border:1px solid #dfe7da;border-radius:9px;
+  background:#fff;color:#294a34;font-size:11px;font-weight:650;outline:none;
+}
+.settings-language-label select:focus{border-color:#7ca47a;box-shadow:0 0 0 3px #7ca47a21}
+.settings-hint{font-size:9px;line-height:1.5;color:#8b9789;margin:0}
+@media(max-width:800px){
+ .settings-popover{right:-105px;top:41px;width:min(286px,calc(100vw - 20px))}
+}
+@media(max-width:420px){
+ .settings-popover{right:-104px;padding:13px}
+}
+
+/* App-wide dark appearance. Values persist through the html[data-theme] setting. */
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --forest:#94caa0;
+  --forest2:#6aa77b;
+  --deep:#0b1510;
+  --gold:#d8b575;
+  --ink:#e5eee5;
+  --muted:#a4b2a5;
+  --line:#34473a;
+  --paper:#18251d;
+  --canvas:#101913;
+}
+html[data-theme="dark"],html[data-theme="dark"] body{
+  background:#101913!important;color:#e5eee5;
+}
+html[data-theme="dark"] .landing,
+html[data-theme="dark"] .public-site,
+html[data-theme="dark"] .auth-page,
+html[data-theme="dark"] .app-shell{
+  background:#101913!important;color:#e5eee5;
+}
+html[data-theme="dark"] .university-hero,
+html[data-theme="dark"] .university-welcome,
+html[data-theme="dark"] .university-news,
+html[data-theme="dark"] .academic-discovery,
+html[data-theme="dark"] .university-impact,
+html[data-theme="dark"] .internal-campus-page,
+html[data-theme="dark"] .public-content,
+html[data-theme="dark"] .public-not-found{
+  background:#101913!important;color:#e5eee5;
+}
+html[data-theme="dark"] .university-hero-mist{opacity:.08}
+html[data-theme="dark"] .university-hero h1,
+html[data-theme="dark"] .welcome-copy h2,
+html[data-theme="dark"] .section-intro-row h2,
+html[data-theme="dark"] .impact-copy h2,
+html[data-theme="dark"] .public-not-found h1,
+html[data-theme="dark"] .public-page-heading h1,
+html[data-theme="dark"] .public-page-heading h2{
+  color:#e5eee5!important;
+}
+html[data-theme="dark"] .university-hero-lead,
+html[data-theme="dark"] .welcome-copy p,
+html[data-theme="dark"] .section-intro-row>p,
+html[data-theme="dark"] .impact-copy>p,
+html[data-theme="dark"] .public-not-found p,
+html[data-theme="dark"] .public-page-heading p,
+html[data-theme="dark"] .academic-bottom-link,
+html[data-theme="dark"] .news-disclaimer{
+  color:#a8b6a9!important;
+}
+html[data-theme="dark"] .university-stats-band{
+  background:#17241a!important;border-color:#2c4030!important;
+}
+html[data-theme="dark"] .university-stats-band:before{border-color:#2d4530;box-shadow:0 0 0 23px #ffffff03,0 0 0 48px #ffffff03}
+html[data-theme="dark"] .value-card,
+html[data-theme="dark"] .university-news-card,
+html[data-theme="dark"] .academic-card,
+html[data-theme="dark"] .internal-academic-card,
+html[data-theme="dark"] .research-feature:not(.research-feature-main),
+html[data-theme="dark"] .internal-news-grid article,
+html[data-theme="dark"] .public-feature-panel,
+html[data-theme="dark"] .university-facts,
+html[data-theme="dark"] .contact-card,
+html[data-theme="dark"] .scoring-main-card,
+html[data-theme="dark"] .scoring-weight-list,
+html[data-theme="dark"] .terms-content article,
+html[data-theme="dark"] .steps-grid article,
+html[data-theme="dark"] .auth-form-panel,
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .stat,
+html[data-theme="dark"] .modal,
+html[data-theme="dark"] .table-container,
+html[data-theme="dark"] .table-wrap{
+  background:#18251d!important;border-color:#304437!important;color:#e5eee5!important;
+}
+html[data-theme="dark"] .value-card strong,
+html[data-theme="dark"] .internal-academic-card h3,
+html[data-theme="dark"] .research-feature h2,
+html[data-theme="dark"] .internal-news-grid article h3,
+html[data-theme="dark"] .panel-heading h2,
+html[data-theme="dark"] .stat>strong,
+html[data-theme="dark"] .auth-form-panel h1,
+html[data-theme="dark"] .terms-content h2,
+html[data-theme="dark"] .contact-card h2,
+html[data-theme="dark"] .contact-card h3,
+html[data-theme="dark"] .scoring-main-card h2{
+  color:#e6eee5!important;
+}
+html[data-theme="dark"] .value-card small,
+html[data-theme="dark"] .internal-academic-card p,
+html[data-theme="dark"] .research-feature p,
+html[data-theme="dark"] .internal-news-grid article p,
+html[data-theme="dark"] .stat-label,
+html[data-theme="dark"] .stat>small,
+html[data-theme="dark"] .terms-content p,
+html[data-theme="dark"] .auth-lead{
+  color:#a6b5a7!important;
+}
+html[data-theme="dark"] .public-footer,
+html[data-theme="dark"] .site-footer{
+  background:#0c1510!important;border-color:#2b3e30!important;color:#a8b6a9!important;
+}
+html[data-theme="dark"] .public-footer-column a,
+html[data-theme="dark"] .public-footer-brand p,
+html[data-theme="dark"] .public-footer-bottom,
+html[data-theme="dark"] .footer-brand-copy small{
+  color:#a8b6a9!important;
+}
+html[data-theme="dark"] .nav-tools-island{
+  background:#18251d!important;border-color:#304437!important;
+}
+html[data-theme="dark"] .nav-settings-button{color:#b9cbb9}
+html[data-theme="dark"] .nav-action-divider{background:#34473a}
+html[data-theme="dark"] .settings-popover{
+  background:#18251d!important;border-color:#3a5140!important;color:#e5eee5!important;
+  box-shadow:0 18px 42px #0007;
+}
+html[data-theme="dark"] .settings-popover-heading{border-color:#34473a;color:#dceadc}
+html[data-theme="dark"] .settings-section-label,
+html[data-theme="dark"] .settings-hint{color:#a0b09f}
+html[data-theme="dark"] .settings-language-label>span{color:#bfd0bf}
+html[data-theme="dark"] .settings-option{
+  background:#101913;border-color:#354a39;color:#bfd0bf;
+}
+html[data-theme="dark"] .settings-option-active{background:#244b32;border-color:#6e9a74;color:#f0f7ec}
+html[data-theme="dark"] .settings-language-label select{
+  background:#101913;color:#e6eee5;border-color:#354a39;
+}
+html[data-theme="dark"] .university-hero-actions .uni-button-primary{background:#7fa77a;color:#102316}
+html[data-theme="dark"] .auth-form-panel{background:#17241b!important}
+html[data-theme="dark"] .auth-form input,
+html[data-theme="dark"] .form-stack input,
+html[data-theme="dark"] .form-stack select,
+html[data-theme="dark"] .form-stack textarea,
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea{
+  background:#101913!important;border-color:#35493a!important;color:#e5eee5!important;
+}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder{color:#728674!important}
+html[data-theme="dark"] .auth-page .login-note{background:#1d3022!important;border-color:#344c37!important;color:#b7c8b7!important}
+html[data-theme="dark"] .auth-page .reset-btn,
+html[data-theme="dark"] .auth-page .auth-home-link{color:#a1c9a2}
+html[data-theme="dark"] .field-control,
+html[data-theme="dark"] .search-input{background:#101913;border-color:#35493a;color:#e5eee5}
+html[data-theme="dark"] .topbar,
+html[data-theme="dark"] .workspace-topbar,
+html[data-theme="dark"] .main-header,
+html[data-theme="dark"] .app-content,
+html[data-theme="dark"] .main-content{
+  background:#101913!important;border-color:#2c4031!important;color:#e5eee5!important;
+}
+html[data-theme="dark"] .workspace-title,
+html[data-theme="dark"] .page-title,
+html[data-theme="dark"] .section-title,
+html[data-theme="dark"] .panel-heading h2{color:#e5eee5!important}
+html[data-theme="dark"] .notice-success{background:#183b27!important;border-color:#2b6540!important;color:#b8e2c2!important}
+html[data-theme="dark"] .notice-error{background:#3b211d!important;border-color:#704038!important;color:#f2c3b9!important}
+html[data-theme="dark"] .notice-info{background:#1a2d35!important;border-color:#34525e!important;color:#bfdce5!important}
+html[data-theme="dark"] .auth-story{border-color:#ffffff16}
+html[data-theme="dark"] .loading-screen{background:#101913!important;color:#e5eee5!important}
+@media(prefers-reduced-motion:reduce){.settings-option{transition:none!important}}
