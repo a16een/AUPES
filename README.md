@@ -49,3 +49,12 @@ The source Form E mentions a student Assessment Method & Feedback row and additi
 ## Privacy and security
 
 Student responses store a null respondent ID. The instructor-facing view contains aggregated component/area averages and aggregated comments, not individual student submission rows. Direct response writes are revoked; submissions use the validating submit_evaluation RPC. Never expose a service-role/secret key in browser code.
+
+## Homepage images
+
+Upload your two image assets into `public/images/` using the exact paths below:
+
+- `public/images/logo.png` — university logo for the left navbar container.
+- `public/images/home-hero.png` — campus or nature photo for the right side of the homepage hero.
+
+The folder contains `public/images/README.md` with sizing tips and upload instructions. Both images are loaded directly from `/images/logo.png` and `/images/home-hero.png`; keep their names case-sensitive and exact.
