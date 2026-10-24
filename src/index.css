@@ -1503,3 +1503,23 @@ html[data-theme="dark"] .loading-screen{background:#101913!important;color:#e5ee
 /* Keep the settings panel fully inside narrow screens */
 @media(max-width:800px){.settings-popover{right:-52px}}
 @media(max-width:420px){.settings-popover{right:-52px}}
+
+/* Workspace header settings placement */
+.workspace-settings-control{height:38px;flex:0 0 auto;margin-left:5px}
+.workspace-settings-control .nav-settings-button{
+  width:36px;height:36px;border:1px solid #e1e8de;border-radius:10px;
+  background:#fff;color:#58725d;
+}
+.workspace-settings-control .nav-settings-button:hover,
+.workspace-settings-control .nav-settings-button[aria-expanded="true"]{background:#edf4e8;color:#244e34}
+.workspace-settings-control .settings-popover{right:-6px;top:43px}
+html[data-theme="dark"] .workspace-settings-control .nav-settings-button{
+  background:#18251d;border-color:#34473a;color:#c0d2c0;
+}
+html[data-theme="dark"] .workspace-settings-control .nav-settings-button:hover,
+html[data-theme="dark"] .workspace-settings-control .nav-settings-button[aria-expanded="true"]{background:#244b32;color:#f0f7ec}
+@media(max-width:760px){
+ .workspace-settings-control{height:34px;margin-left:0}
+ .workspace-settings-control .nav-settings-button{width:32px;height:32px}
+ .workspace-settings-control .settings-popover{right:-6px;top:39px}
+}
