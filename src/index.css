@@ -1499,3 +1499,7 @@ html[data-theme="dark"] .notice-info{background:#1a2d35!important;border-color:#
 html[data-theme="dark"] .auth-story{border-color:#ffffff16}
 html[data-theme="dark"] .loading-screen{background:#101913!important;color:#e5eee5!important}
 @media(prefers-reduced-motion:reduce){.settings-option{transition:none!important}}
+
+/* Keep the settings panel fully inside narrow screens */
+@media(max-width:800px){.settings-popover{right:-52px}}
+@media(max-width:420px){.settings-popover{right:-52px}}
