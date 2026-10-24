@@ -37,7 +37,7 @@ function PublicHeader({route,navigate}:{route:string;navigate:(to:string)=>void}
  const [menuOpen,setMenuOpen]=useState(false);const [settingsOpen,setSettingsOpen]=useState(false);
  const closeMenu=()=>setMenuOpen(false);
  const links=[{to:"/",label:"Home"},{to:"/about",label:"About"},{to:"/academics",label:"Academics"},{to:"/research",label:"Research"},{to:"/news",label:"News"},{to:"/contact",label:"Contact"}];
- return <header className="public-header">
+ return <header className="site-nav public-header">
   <div className="nav-island nav-brand-island"><PublicLink to="/" navigate={navigate} className="university-brand-link"><span className="university-logo-box"><img src="/images/logo.png" alt="Ambo University logo" onError={e=>{e.currentTarget.style.display="none"}}/><span className="logo-fallback"><GraduationCap size={27}/></span></span></PublicLink></div>
   <button className="public-menu-toggle icon-btn" type="button" aria-label={menuOpen?"Close navigation":"Open navigation"} aria-expanded={menuOpen} onClick={()=>setMenuOpen(v=>!v)}><Menu size={20}/></button>
   <div className="nav-island nav-tools-island"><div className="settings-control"><button className="nav-settings-button" type="button" aria-label="Settings" aria-expanded={settingsOpen} title="Settings" onClick={()=>setSettingsOpen(v=>!v)}><Settings size={17}/></button>{settingsOpen&&<div className="settings-popover"><strong>Site settings</strong><span>Personalization options are coming soon.</span><button type="button" onClick={()=>setSettingsOpen(false)}>Close</button></div>}</div><span className="nav-action-divider"/><PublicLink to="/sign-in" navigate={navigate} className="navbar-signin" onAfterNavigate={closeMenu}><UserRound size={16}/><span>Sign in</span></PublicLink></div>
