@@ -1,10 +1,10 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
   Activity, ArrowRight, ArrowUpRight, Award, Bell, BookOpen, BookMarked, Building2, CalendarDays,
   ChartNoAxesCombined, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp,
   ClipboardCheck, Clock3, ExternalLink, FileText, FlaskConical, Globe2, GraduationCap, Handshake, Leaf, Lightbulb,
-  LayoutDashboard, LoaderCircle, LockKeyhole, LogOut, Mail, MapPin, Menu, Plus,
-  Scale, Search, Settings, ShieldCheck, Sparkles, Sprout, UserRound, Users, X
+  Languages, LayoutDashboard, LoaderCircle, LockKeyhole, LogOut, Mail, MapPin, Menu, Moon, Plus,
+  Scale, Search, Settings, ShieldCheck, Sparkles, Sprout, Sun, UserRound, Users, X
 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, SUPABASE_KEY, SUPABASE_URL } from "./lib/supabase";
@@ -18,6 +18,66 @@ type Page = "overview"|"evaluations"|"results"|"accounts"|"assignments"|"fill";
 const FORMS:FormType[]=["student","department_head","peer","self"];
 const RATINGS:Rating[]=[5,4,3,2,1,0,"NA"];
 const cx=(...values:Array<string|false|null|undefined>)=>values.filter(Boolean).join(" ");
+
+type ThemeMode = "light" | "dark";
+type LanguageCode = "en" | "am" | "om" | "ti";
+type AppSettings = {
+ theme:ThemeMode;
+ setTheme:(theme:ThemeMode)=>void;
+ language:LanguageCode;
+ setLanguage:(language:LanguageCode)=>void;
+ t:(key:string)=>string;
+};
+const AppSettingsContext=createContext<AppSettings>({
+ theme:"light",setTheme:()=>{},language:"en",setLanguage:()=>{},t:(key)=>key
+});
+function useAppSettings(){return useContext(AppSettingsContext)}
+const UI_TRANSLATIONS:Record<LanguageCode,Record<string,string>>={
+ en:{},
+ am:{
+  "Home":"መነሻ","About":"ስለ እኛ","Academics":"አካዳሚክ","Research":"ምርምር","News":"ዜና","Contact":"ያግኙን",
+  "Sign in":"ግባ","Settings":"ቅንብሮች","Site settings":"የገጽ ቅንብሮች","Appearance":"ገጽታ","Light":"ብርሃን","Dark":"ጨለማ",
+  "Language":"ቋንቋ","Choose a language":"ቋንቋ ይምረጡ","Changes apply immediately.":"ለውጦቹ ወዲያውኑ ይተገበራሉ።",
+  "Close":"ዝጋ","Welcome back.":"እንኳን ደህና መጡ።","Reset your password.":"የይለፍ ቃልዎን ዳግም ያስጀምሩ።",
+  "YOUR UNIVERSITY WORKSPACE":"የዩኒቨርሲቲ የሥራ ቦታዎ","ACCOUNT RECOVERY":"መለያ መመለስ",
+  "Sign in with the account provided by your AUPES administrator.":"በAUPES አስተዳዳሪዎ የተሰጠዎትን መለያ በመጠቀም ይግቡ።",
+  "Enter your university email to receive password-reset instructions.":"የይለፍ ቃል መመለሻ መመሪያ ለመቀበል የዩኒቨርሲቲ ኢሜይልዎን ያስገቡ።",
+  "Email address":"የኢሜይል አድራሻ","Password":"የይለፍ ቃል","Enter your password":"የይለፍ ቃልዎን ያስገቡ",
+  "Forgot your password?":"የይለፍ ቃልዎን ረሱ?","Return to sign in":"ወደ መግቢያ ተመለስ","Send reset link":"የመመለሻ ሊንክ ላክ",
+  "Please wait…":"እባክዎ ይጠብቁ…","Back to the public site":"ወደ ዋናው ድረ-ገጽ ተመለስ",
+  "Accounts are provisioned by AUPES administrators. There is no public self-registration.":"መለያዎች በAUPES አስተዳዳሪዎች ይፈጠራሉ። ለሁሉም የሚከፈት ራስ-ምዝገባ የለም።",
+  "Amharic":"አማርኛ","Afaan Oromo":"አፋን ኦሮሞ","Tigrinya":"ትግርኛ"
+ },
+ om:{
+  "Home":"Fuula jalqabaa","About":"Waa'ee","Academics":"Barnoota","Research":"Qorannoo","News":"Oduu","Contact":"Nu qunnamaa",
+  "Sign in":"Seeni","Settings":"Qindaa'inoota","Site settings":"Qindaa'inoota marsariitichaa","Appearance":"Bifa","Light":"Ifaa","Dark":"Dukkana",
+  "Language":"Afaan","Choose a language":"Afaan filadhu","Changes apply immediately.":"Jijjiiramoonni battalumatti hojii irra oolu.",
+  "Close":"Cufi","Welcome back.":"Baga nagaan deebite.","Reset your password.":"Jecha iccitii kee haaromsi.",
+  "YOUR UNIVERSITY WORKSPACE":"Iddoo hojii yunivarsiitii kee","ACCOUNT RECOVERY":"Herrega deebisanii argachuu",
+  "Sign in with the account provided by your AUPES administrator.":"Herrega bulchaan AUPES siif kenneen seeni.",
+  "Enter your university email to receive password-reset instructions.":"Qajeelfama jecha iccitii haaromsuu argachuuf imeelii yunivarsiitii kee galchi.",
+  "Email address":"Teessoo imeelii","Password":"Jecha iccitii","Enter your password":"Jecha iccitii kee galchi",
+  "Forgot your password?":"Jecha iccitii kee irraanfatte?","Return to sign in":"Gara seenuutti deebi'i","Send reset link":"Geessituu haaromsaa ergi",
+  "Please wait…":"Maaloo eegii…","Back to the public site":"Gara marsariitii uummataatti deebi'i",
+  "Accounts are provisioned by AUPES administrators. There is no public self-registration.":"Herregawwan bulchitoota AUPES tiin qophaa'u. Ofumaan galmaa'uun hin jiru.",
+  "Amharic":"Afaan Amaaraa","Afaan Oromo":"Afaan Oromoo","Tigrinya":"Afaan Tigraay"
+ },
+ ti:{
+  "Home":"መበገሲ","About":"ብዛዕባ","Academics":"ትምህርቲ","Research":"ምርምር","News":"ዜና","Contact":"ርኸቡና",
+  "Sign in":"እቶ","Settings":"ቅንብራት","Site settings":"ቅንብራት መርበብ","Appearance":"መልክዕ","Light":"ብሩህ","Dark":"ጸልማት",
+  "Language":"ቋንቋ","Choose a language":"ቋንቋ ምረጽ","Changes apply immediately.":"ለውጢ ብቕጽበት ይትግበር።",
+  "Close":"ዕጸው","Welcome back.":"እንኳዕ ብደሓን ተመለስካ።","Reset your password.":"መሕለፊ ቃልካ ኣሐድስ።",
+  "YOUR UNIVERSITY WORKSPACE":"ናይ ዩኒቨርሲቲ መስርሒ ቦታ","ACCOUNT RECOVERY":"ምምላስ ሕሳብ",
+  "Sign in with the account provided by your AUPES administrator.":"ምስ ኣብ ዝተዋህበካ ናይ AUPES ሕሳብ እቶ።",
+  "Enter your university email to receive password-reset instructions.":"መምርሒ መሕለፊ ቃል ንምቕባል ኢመይል ዩኒቨርሲቲኻ ኣእቱ።",
+  "Email address":"ኣድራሻ ኢመይል","Password":"መሕለፊ ቃል","Enter your password":"መሕለፊ ቃልካ ኣእቱ",
+  "Forgot your password?":"መሕለፊ ቃልካ ረሲዕካ?","Return to sign in":"ናብ ምእታው ተመለስ","Send reset link":"መላግቦ ምሕዳስ ስደድ",
+  "Please wait…":"በጃኻ ተጸበ…","Back to the public site":"ናብ ህዝባዊ መርበብ ተመለስ",
+  "Accounts are provisioned by AUPES administrators. There is no public self-registration.":"ሕሳባት ብምምሕዳር AUPES ይዳለዉ። ህዝባዊ ርእሰ-ምዝገባ የለን።",
+  "Amharic":"ኣማርኛ","Afaan Oromo":"ኣፋን ኦሮሞ","Tigrinya":"ትግርኛ"
+ }
+};
+
 const initials=(name="")=>name.trim().split(/\s+/).filter(Boolean).slice(0,2).map((x)=>x[0]).join("").toUpperCase()||"AU";
 const dateText=(date?:string|null)=>date?new Date(date+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"No deadline";
 const formCode=(type:FormType)=>({student:"FORM A",department_head:"FORM B",peer:"FORM C",self:"FORM D"}[type]);
