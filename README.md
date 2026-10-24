@@ -14,7 +14,7 @@ A responsive academic staff evaluation application using React, Vite, TypeScript
 
 ## Public pages and content
 
-The public site is self-contained within AUPES. Its `/about`, `/academics`, `/research`, `/news`, `/how-it-works`, `/scoring`, `/privacy`, `/contact` and `/terms-of-use` routes contain their own page content and internal navigation. The site does not link out to an external university website for page content. Account creation remains administrator-managed; public visitors cannot self-register.
+The public site is self-contained within AUPES. Its `/about`, `/academics`, `/research`, `/news`, `/how-it-works`, `/scoring`, `/privacy`, `/contact` and `/terms-of-use` routes contain their own page content and internal navigation. Account creation remains administrator-managed; public visitors cannot self-register.
 
 ## Supabase configuration
 
