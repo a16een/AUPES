@@ -678,7 +678,7 @@
 
 /* Final navigation/hero refinements and animated values ribbon */
 .public-site{overflow:visible!important}
-.public-site .public-header.container{
+.public-site .public-header{
  position:sticky;top:0;z-index:120;
  display:flex;align-items:center;justify-content:space-between;
  width:min(1180px,calc(100% - 64px));height:76px!important;
@@ -686,7 +686,7 @@
  border:0!important;border-bottom:0!important;border-radius:0!important;
  background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;
 }
-.public-site .public-header.container:before,.public-site .public-header.container:after{display:none!important;content:none!important}
+.public-site .public-header:before,.public-site .public-header:after{display:none!important;content:none!important}
 .public-site .public-header .nav-brand-island{order:1;flex:0 0 auto!important;width:auto!important;min-width:0;height:auto!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}
 .public-site .public-header .university-logo-box{width:58px;height:58px;flex:0 0 58px;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 .public-site .public-header .university-brand-link{width:auto;height:auto}
@@ -712,7 +712,7 @@
 .public-site .public-header .mobile-nav-scrim{display:none}
 .public-site .public-header .settings-popover{top:39px}
 @media(max-width:1000px) and (min-width:801px){
- .public-site .public-header.container{width:calc(100% - 40px);gap:10px}
+ .public-site .public-header{width:calc(100% - 40px);gap:10px}
  .public-site .public-header .university-logo-box{width:51px;height:51px;flex-basis:51px}
  .public-site .public-header .nav-links-island>a{padding:0 9px;font-size:9px}
  .public-site .public-header .nav-tools-island{padding:3px}
@@ -720,7 +720,7 @@
  .public-site .public-header .navbar-signin{padding:0 8px}
 }
 @media(max-width:800px){
- .public-site .public-header.container{
+ .public-site .public-header{
   width:calc(100% - 36px);height:66px!important;display:grid;
   grid-template-columns:39px minmax(0,1fr) auto;gap:7px;padding:5px 0;
  }
@@ -754,7 +754,7 @@
  .public-site .public-header .nav-links-island>a.nav-link-active{background:#1b4a31;color:#fff}
 }
 @media(max-width:620px){
- .public-site .public-header.container{width:calc(100% - 28px);height:64px!important;grid-template-columns:35px minmax(0,1fr) auto;gap:5px}
+ .public-site .public-header{width:calc(100% - 28px);height:64px!important;grid-template-columns:35px minmax(0,1fr) auto;gap:5px}
  .public-site .public-header .university-logo-box{width:64px;height:64px;flex-basis:64px}
  .public-site .public-header .public-menu-toggle{width:34px;height:34px;flex-basis:34px}
  .public-site .public-header .nav-tools-island{height:36px;padding:2px 3px}
