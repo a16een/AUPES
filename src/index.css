@@ -1988,3 +1988,106 @@ html[data-theme="dark"] .settings-hint{border-top-color:#2c3c2f!important;color:
   .settings-popover{width:min(292px,calc(100vw - 16px));right:-48px;padding:13px}
   .settings-language-option{min-height:46px}
 }
+
+/* Dark-theme refinements for homepage artwork, informational pages, and workspace detail states */
+html[data-theme="dark"] .academic-card:before{opacity:.16}
+html[data-theme="dark"] .academic-card-link{color:#a7d29e!important;border-top-color:#2e4531!important}
+html[data-theme="dark"] .academic-card-number{color:#9aaf97!important}
+html[data-theme="dark"] .academic-card-icon{background:#29432e!important;color:#b6d8ab!important}
+html[data-theme="dark"] .news-card-art{
+  background:#1c2b20!important;color:#b5d5ad!important;
+  border-bottom:1px solid #2b402f;
+}
+html[data-theme="dark"] .news-art-research{background:linear-gradient(135deg,#263c2a,#202e23)!important}
+html[data-theme="dark"] .news-art-culture{background:linear-gradient(135deg,#21362a,#1c2b20)!important}
+html[data-theme="dark"] .news-art-award{background:linear-gradient(135deg,#383323,#233425)!important}
+html[data-theme="dark"] .news-card-art:before,
+html[data-theme="dark"] .news-card-art:after{border-color:#8caf7a24}
+html[data-theme="dark"] .news-card-art>span{background:#233a2a!important;border-color:#3a5740!important;color:#c3dcae!important}
+html[data-theme="dark"] .news-card-art>small{color:#bacdad!important}
+html[data-theme="dark"] .news-category{color:#a3bf91!important}
+html[data-theme="dark"] .news-card-link{color:#b1d1a4!important}
+html[data-theme="dark"] .impact-illustration{
+  background:radial-gradient(ellipse at center,#192a1d 0%,#111c14 48%,#0d151000 73%)!important;
+}
+html[data-theme="dark"] .impact-orbit{border-color:#3b5b3e!important}
+html[data-theme="dark"] .impact-core{
+  background:linear-gradient(145deg,#2d6742,#173c28)!important;
+  border-color:#19271c!important;box-shadow:0 16px 40px #0005!important;color:#dfd19b!important;
+}
+html[data-theme="dark"] .impact-core>span{color:#e1ebdc!important}
+html[data-theme="dark"] .impact-label{
+  background:#1c2b20!important;border-color:#344838!important;color:#c5d8c0!important;
+  box-shadow:0 8px 20px #0003!important;
+}
+html[data-theme="dark"] .impact-label svg{color:#d5bb7e!important}
+html[data-theme="dark"] .impact-sun{background:#c0a568!important;box-shadow:0 0 0 9px #c0a5681a!important}
+html[data-theme="dark"] .impact-pillars article{border-bottom-color:#2b3e2e!important}
+html[data-theme="dark"] .impact-pillars article>span{background:#233b28!important;color:#b9d6a7!important}
+html[data-theme="dark"] .impact-pillars article b{color:#dbe9d7!important}
+html[data-theme="dark"] .impact-pillars article small{color:#9daf9d!important}
+html[data-theme="dark"] .aupes-promo{
+  background:linear-gradient(110deg,#122c1d,#173c28 64%,#1b422c)!important;
+  color:#edf5e8!important;
+}
+html[data-theme="dark"] .aupes-promo-inner>div:nth-child(2)>small{color:#c8d8aa!important}
+html[data-theme="dark"] .aupes-promo-inner h2{color:#f0f6eb!important}
+html[data-theme="dark"] .aupes-promo-inner p{color:#c0d3c0!important}
+html[data-theme="dark"] .aupes-promo-symbol{background:#ffffff0d;border-color:#ffffff1e;color:#e2cf92!important}
+html[data-theme="dark"] .public-cta{border-top-color:#293b2e!important}
+html[data-theme="dark"] .public-cta h2{color:#e5eee4!important}
+html[data-theme="dark"] .public-cta p{color:#a7b5a8!important}
+html[data-theme="dark"] .public-cta .btn-outline{background:#17241b!important;color:#e4ece0!important;border-color:#405542!important}
+html[data-theme="dark"] .public-cta .btn-outline:hover{background:#203629!important}
+html[data-theme="dark"] .public-three-cards article>span,
+html[data-theme="dark"] .privacy-grid article>span{border:1px solid #304a34}
+html[data-theme="dark"] .privacy-note,
+html[data-theme="dark"] .scoring-note{
+  background:#1a2b1e!important;border-color:#304934!important;color:#c5dac0!important;
+}
+html[data-theme="dark"] .privacy-note b,
+html[data-theme="dark"] .scoring-note b{color:#dcead7!important}
+html[data-theme="dark"] .privacy-note p,
+html[data-theme="dark"] .scoring-note span{color:#a8bba6!important}
+html[data-theme="dark"] .form-perspective-grid article{background:#17231b!important;border-color:#2c3d30!important}
+html[data-theme="dark"] .form-perspective-grid article>div>b,
+html[data-theme="dark"] .form-perspective-grid h3{color:#e3ede0!important}
+html[data-theme="dark"] .form-perspective-grid p{color:#a8b6a8!important}
+html[data-theme="dark"] .scoring-weight-row{border-bottom-color:#2b3b2f!important}
+html[data-theme="dark"] .scoring-weight-row>div>b{color:#d7e4d4!important}
+html[data-theme="dark"] .scoring-weight-row>strong{color:#b8dcae!important}
+html[data-theme="dark"] .scoring-weight-row .track{background:#2c3d2f!important}
+html[data-theme="dark"] .university-priorities b{color:#deeadb!important}
+html[data-theme="dark"] .university-priorities p{color:#a3b2a4!important}
+html[data-theme="dark"] .contact-email{color:#a2d19b!important}
+html[data-theme="dark"] .contact-card-primary{background:#1d3022!important}
+html[data-theme="dark"] .contact-card-primary h2{color:#e3edde!important}
+html[data-theme="dark"] .inline-link{color:#9ac899!important}
+html[data-theme="dark"] .inline-link:hover{color:#c0e6b7!important}
+html[data-theme="dark"] .contact-grid .contact-card,
+html[data-theme="dark"] .privacy-grid article{box-shadow:none!important}
+html[data-theme="dark"] .form-progress>span,
+html[data-theme="dark"] .form-progress>small{color:#a5b4a4!important}
+html[data-theme="dark"] .form-progress>strong{color:#aad49c!important}
+html[data-theme="dark"] .course-context{background:#17231b!important;border-color:#2d3e30!important}
+html[data-theme="dark"] .context-icon{background:#253a2a!important;color:#acd3a1!important}
+html[data-theme="dark"] .course-context small{color:#8da28e!important}
+html[data-theme="dark"] .course-context strong{color:#e2ece0!important}
+html[data-theme="dark"] .course-context span{color:#a6b5a6!important}
+html[data-theme="dark"] .context-teacher{border-left-color:#344637!important}
+html[data-theme="dark"] .question-group header small{color:#9eaf9f!important}
+html[data-theme="dark"] .group-progress{background:#253528!important;color:#b9cdb4!important}
+html[data-theme="dark"] .context-teacher b{color:#dce9d8!important}
+html[data-theme="dark"] .feedback-grid label{color:#d1dfcf!important}
+html[data-theme="dark"] .feedback-icon{background:#263c2a!important;color:#b1d5a5!important}
+html[data-theme="dark"] .feedback-icon.improve{background:#3b2923!important;color:#e1af8f!important}
+html[data-theme="dark"] .feedback-result{border-bottom-color:#2c3d30!important}
+html[data-theme="dark"] .feedback-result p{color:#c2d0c0!important}
+html[data-theme="dark"] .assignment-row:hover .assignment-details b{color:#b2daa5!important}
+html[data-theme="dark"] .cycle-actions .btn-outline{background:#17231b!important;color:#d9e6d6!important;border-color:#3c5140!important}
+html[data-theme="dark"] .loading-inline{color:#a6b6a5!important}
+html[data-theme="dark"] .ready{background:#203a27!important;color:#b4ddb0!important}
+html[data-theme="dark"] .pending{background:#272f28!important;color:#a4b0a3!important}
+html[data-theme="dark"] .page-notice{color:#b5c6b3!important}
+html[data-theme="dark"] .search input::placeholder{color:#819281!important}
+html[data-theme="dark"] .main-area .avatar{background:#29432f!important;color:#dce9d7!important}
