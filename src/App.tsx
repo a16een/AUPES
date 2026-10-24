@@ -389,6 +389,20 @@ function normalizeRoute(){
  const aliases:Record<string,string>={"/about-us":"/about","/process":"/how-it-works","/evaluation-methodology":"/scoring","/terms":"/terms-of-use"};
  return aliases[raw]||raw;
 }
+
+Object.assign(UI_TRANSLATIONS.am,{
+ "Ambo University brings together learners, educators and researchers across academic disciplines and campuses. Its learning community connects teaching and learning with inquiry, innovation, knowledge sharing and community engagement.":"አምቦ ዩኒቨርሲቲ በተለያዩ የአካዳሚክ ዘርፎች ተማሪዎችን፣ አስተማሪዎችን እና ተመራማሪዎችን ያገናኛል። የመማር ማህበረሰቡ ትምህርትን ከጥናት፣ ከፈጠራ፣ ከእውቀት መጋራት እና ከማህበረሰብ አገልግሎት ጋር ያገናኛል።",
+ "Explore academic areas":"የአካዳሚክ መስኮችን ያስሱ"
+});
+Object.assign(UI_TRANSLATIONS.om,{
+ "Ambo University brings together learners, educators and researchers across academic disciplines and campuses. Its learning community connects teaching and learning with inquiry, innovation, knowledge sharing and community engagement.":"Yunivarsiitiin Amboo barattoota, barsiisota fi qorattoota dameewwan barnootaa adda addaa irraa walitti fida. Hawaasni barnootaa qorannoo, kalaqa, qoodinsa beekumsaa fi tajaajila hawaasaa waliin walitti hidha.",
+ "Explore academic areas":"Dameewwan barnootaa qoradhu"
+});
+Object.assign(UI_TRANSLATIONS.ti,{
+ "Ambo University brings together learners, educators and researchers across academic disciplines and campuses. Its learning community connects teaching and learning with inquiry, innovation, knowledge sharing and community engagement.":"ዩኒቨርሲቲ ኣምቦ ኣብ ዝተፈላለዩ ኣካዳሚያዊ ዓውድታት ዝርከቡ ተማሃሮ፣ መምህራንን መራሕቲ ምርምርን የራኽብ። ማሕበረሰብ ትምህርቲ ምስ ምርምር፣ ምህዞ፣ ምክፋል ፍልጠትን ኣገልግሎት ማሕበረሰብን የተኣሳስር።",
+ "Explore academic areas":"ኣካዳሚያዊ ዓውድታት መርምር"
+});
+
 function readStoredSetting<T extends string>(key:string,allowed:readonly T[],fallback:T):T{
  if(typeof window==="undefined")return fallback;
  try{const value=window.localStorage.getItem(key) as T|null;return value&&allowed.includes(value)?value:fallback;}catch{return fallback;}
