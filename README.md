@@ -4,13 +4,17 @@ A responsive academic staff evaluation application using React, Vite, TypeScript
 
 ## Included
 
-- Landing page and secure email/password sign-in.
+- Public pages at `/`, `/about`, `/how-it-works`, `/scoring`, `/privacy`, `/contact` and `/terms-of-use`; dedicated sign-in and password-reset page at `/sign-in`.
 - Role-aware dashboards for students, department heads, peers, instructors, system admins and academic oversight roles.
 - Form A, B, C and D question sets from the supplied directive.
 - Required ratings: 5, 4, 3, 2, 1, 0, NA. NA is excluded; 0 is a valid score.
 - Form E-style scoring: Students 40%, Department Head 35%, Peer 15%, Self-evaluation 10%. Each component weight is applied once, and no final score is shown until all four component averages exist.
 - Administrator account provisioning via a server-side Edge Function, assignment creation, RLS, atomic response submission and aggregate-only instructor result summaries.
 - Netlify SPA routing.
+
+## Public pages and content
+
+The public site introduces AUPES, explains the evaluation workflow and scoring model, documents privacy and responsible-use expectations, and provides a support route. Institutional context is summarized from Ambo University's public website; links to the official university site are provided for institutional details and news. Account creation remains administrator-managed; public visitors cannot self-register.
 
 ## Supabase configuration
 
