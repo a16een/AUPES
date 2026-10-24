@@ -1201,3 +1201,98 @@
 @media(prefers-reduced-motion:reduce){
   .auth-page .auth-form input{transition:none}
 }
+
+/* Auth desktop composition: full-height connected split, story left and form right */
+.auth-page{
+  min-height:100vh;
+  background:#f5f8f2;
+}
+.auth-page .auth-layout{
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:0;
+  gap:0;
+  grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);
+  align-items:stretch;
+  min-height:calc(100vh - 52px);
+  flex:1 0 auto;
+}
+.auth-page .auth-story{
+  order:1;
+  align-self:stretch;
+  min-height:100%;
+  border:0;
+  border-right:1px solid #ffffff20;
+  border-radius:0;
+  box-shadow:none;
+  padding:clamp(42px,7vw,112px);
+}
+.auth-page .auth-form-panel{
+  order:2;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-self:stretch;
+  min-height:100%;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  background:linear-gradient(145deg,#ffffff 0%,#fbfcf9 100%);
+  padding:clamp(38px,7vw,112px);
+}
+.auth-page .auth-form-panel>.kicker{margin-bottom:14px}
+.auth-page .auth-form-panel h1{font-size:clamp(32px,3.6vw,46px)}
+.auth-page .auth-lead{max-width:430px}
+.auth-page .auth-footer{
+  width:100%;
+  max-width:none;
+  min-height:52px;
+  margin:0;
+  padding:13px clamp(24px,4vw,64px);
+  background:#f5f8f2;
+  box-sizing:border-box;
+}
+@media(max-width:1050px) and (min-width:761px){
+  .auth-page .auth-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .auth-page .auth-story{padding:clamp(30px,4.8vw,58px)}
+  .auth-page .auth-form-panel{padding:clamp(30px,4.8vw,58px)}
+  .auth-page .auth-story h2{font-size:clamp(28px,3.5vw,36px)}
+}
+@media(max-width:760px){
+  .auth-page .auth-layout{
+    width:min(540px,calc(100% - 36px));
+    max-width:540px;
+    margin:0 auto;
+    padding:28px 0 24px;
+    gap:0;
+    grid-template-columns:minmax(0,1fr);
+    align-items:center;
+    min-height:calc(100vh - 52px);
+    flex:1 0 auto;
+  }
+  .auth-page .auth-story{display:none!important}
+  .auth-page .auth-form-panel{
+    order:1;
+    width:100%;
+    min-height:0;
+    align-self:center;
+    padding:28px 25px;
+    border:1px solid #e2e9dd;
+    border-radius:18px;
+    background:#fff;
+    box-shadow:0 18px 45px rgba(26,58,36,.08);
+  }
+  .auth-page .auth-footer{
+    width:100%;
+    max-width:none;
+    min-height:52px;
+    margin:0;
+    padding:13px 18px;
+    gap:12px;
+  }
+}
+@media(max-width:420px){
+  .auth-page .auth-layout{width:calc(100% - 28px);padding:20px 0}
+  .auth-page .auth-form-panel{padding:24px 18px}
+}
