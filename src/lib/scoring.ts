@@ -3,7 +3,7 @@ export type Rating = 0|1|2|3|4|5|"NA";
 export type SummaryRow = {instructor_id:string;form_type:FormType;area:string|null;response_count:number;average_score:number|null;weighted_score:number|null;strengths:string|null;improvements:string|null};
 export function averageRatings(values:Rating[]) {
  const valid=values.filter((v):v is 0|1|2|3|4|5=>v!=="NA");
- return valid.length?valid.reduce((sum,v)=>sum+v,0)/valid.length:null;
+ return valid.length?valid.reduce<number>((sum,v)=>sum+v,0)/valid.length:null;
 }
 export function weightedContribution(average:number|null|undefined,form:FormType) {
  return average==null||Number.isNaN(average)?null:(average/5)*FORM_META[form].weight;
