@@ -30,7 +30,7 @@ For security, visitors cannot self-register as admins.
 Deploy the function using the Supabase CLI after linking this project:
 supabase functions deploy admin-create-user
 
-The database migration is at supabase/migrations/20261024150000_aupes_core.sql. It has been applied to the connected database; apply it with the normal Supabase migration workflow when setting up another environment.
+The database migration is at supabase/migrations/20261024143247_aupes_core.sql. It has been applied to the connected database; apply it with the normal Supabase migration workflow when setting up another environment.
 
 ## Local run and deployment
 
