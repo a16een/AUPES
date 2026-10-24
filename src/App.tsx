@@ -78,6 +78,32 @@ const UI_TRANSLATIONS:Record<LanguageCode,Record<string,string>>={
  }
 };
 
+
+Object.assign(UI_TRANSLATIONS.am,{
+ "Open navigation":"የአሰሳ ምናሌ ክፈት","Close navigation":"የአሰሳ ምናሌ ዝጋ","Main navigation":"ዋና አሰሳ",
+ "AMBO UNIVERSITY · AUPES":"አምቦ ዩኒቨርሲቲ · AUPES",
+ "Better teaching begins with honest feedback.":"የተሻለ ትምህርት በቅን ግብረመልስ ይጀምራል።",
+ "Return to your assigned evaluations, submit thoughtful feedback and review the insights available to your role.":"የተመደቡልዎትን ግምገማዎች ይመለሱ፣ ጠቃሚ ግብረመልስ ያቅርቡ እና ለሚናዎ የተፈቀዱ ውጤቶችን ይመልከቱ።",
+ "Structured evaluation forms":"የተደራጁ የግምገማ ቅጾች","Defined scoring weights":"ግልጽ የውጤት ክብደቶች",
+ "Role-aware access to results":"በሚና ላይ የተመሠረተ የውጤት መዳረሻ","Academic quality is built one useful insight at a time.":"የትምህርት ጥራት በእያንዳንዱ ጠቃሚ ግንዛቤ ይገነባል።"
+});
+Object.assign(UI_TRANSLATIONS.om,{
+ "Open navigation":"Menyu bana","Close navigation":"Menyu cufi","Main navigation":"Menyu ijoo",
+ "AMBO UNIVERSITY · AUPES":"YUNIVARSIITII AMBOO · AUPES",
+ "Better teaching begins with honest feedback.":"Barsiisni gaariin yaada dhugaa irraa jalqaba.",
+ "Return to your assigned evaluations, submit thoughtful feedback and review the insights available to your role.":"Gamaaggama siif ramadame deebi'ii ilaali, yaada ijaarsaa dhiyeessi, odeeffannoo gahee keetiif hayyamameenis ilaali.",
+ "Structured evaluation forms":"Unkaalee gamaaggamaa qindaa'an","Defined scoring weights":"Ulfaatina qabxii ifa ta'e",
+ "Role-aware access to results":"Bu'aa gahee irratti hundaa'e argachuu","Academic quality is built one useful insight at a time.":"Qulqullinni barnootaa hubannoo faayidaa qabu tokkoon tokkoon ijaarama."
+});
+Object.assign(UI_TRANSLATIONS.ti,{
+ "Open navigation":"መርበብ ክፈት","Close navigation":"መርበብ ዕጸው","Main navigation":"ቀንዲ መርበብ",
+ "AMBO UNIVERSITY · AUPES":"ኣምቦ ዩኒቨርሲቲ · AUPES",
+ "Better teaching begins with honest feedback.":"ዝሓሸ ትምህርቲ ብቅኑዕ ርእይቶ ይጅምር።",
+ "Return to your assigned evaluations, submit thoughtful feedback and review the insights available to your role.":"ናብ ዝተመደቡልካ ገምጋማት ተመለስ፣ ጠቓሚ ርእይቶ ኣቕርብ፣ ንሓላፍነትካ ዝፍቀዱ ሓበሬታታት እውን ርአ።",
+ "Structured evaluation forms":"ዝተዋደዱ ቅጥዕታት ገምጋም","Defined scoring weights":"ግልጺ ክብደታት ነጥቢ",
+ "Role-aware access to results":"ብሓላፍነት ዝተመርኮሰ መእተዊ ውጽኢት","Academic quality is built one useful insight at a time.":"ጽሬት ትምህርቲ ብነፍሲ ወከፍ ጠቓሚ ሓሳብ ይህነጽ።"
+});
+
 const initials=(name="")=>name.trim().split(/\s+/).filter(Boolean).slice(0,2).map((x)=>x[0]).join("").toUpperCase()||"AU";
 const dateText=(date?:string|null)=>date?new Date(date+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"No deadline";
 const formCode=(type:FormType)=>({student:"FORM A",department_head:"FORM B",peer:"FORM C",self:"FORM D"}[type]);
@@ -293,7 +319,16 @@ function normalizeRoute(){
  const aliases:Record<string,string>={"/about-us":"/about","/process":"/how-it-works","/evaluation-methodology":"/scoring","/terms":"/terms-of-use"};
  return aliases[raw]||raw;
 }
+function readStoredSetting<T extends string>(key:string,allowed:readonly T[],fallback:T):T{
+ if(typeof window==="undefined")return fallback;
+ try{const value=window.localStorage.getItem(key) as T|null;return value&&allowed.includes(value)?value:fallback;}catch{return fallback;}
+}
 export default function App(){
+ const [theme,setTheme]=useState<ThemeMode>(()=>readStoredSetting("aupes-theme",["light","dark"] as const,"light"));
+ const [language,setLanguage]=useState<LanguageCode>(()=>readStoredSetting("aupes-language",["en","am","om","ti"] as const,"en"));
+ const t=(key:string)=>UI_TRANSLATIONS[language][key]??key;
+ useEffect(()=>{document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;try{window.localStorage.setItem("aupes-theme",theme)}catch{}},[theme]);
+ useEffect(()=>{document.documentElement.lang=language;try{window.localStorage.setItem("aupes-language",language)}catch{}},[language]);
  const [session,setSession]=useState<Session|null>(null);const [profile,setProfile]=useState<Profile|null>(null);const [authLoading,setAuthLoading]=useState(true);const [profileLoading,setProfileLoading]=useState(false);const [profileError,setProfileError]=useState("");const [path,setPath]=useState(normalizeRoute);
  const navigate=(to:string)=>{if(window.location.pathname!==to)window.history.pushState({},"",to);setPath(to);window.scrollTo({top:0,behavior:"auto"});};
  useEffect(()=>{const onPopState=()=>setPath(normalizeRoute());window.addEventListener("popstate",onPopState);return()=>window.removeEventListener("popstate",onPopState)},[]);
@@ -305,5 +340,5 @@ export default function App(){
  if(path.startsWith("/workspace")&&session&&profile&&!profile.is_active)return <div className="loading-screen"><ShieldCheck size={29}/><h2>Account paused</h2><p>Your AUPES access is inactive. Contact the system administrator.</p><Button variant="outline" onClick={()=>void supabase.auth.signOut()}>Sign out</Button></div>;
  if(path.startsWith("/workspace")&&session&&profile)return <AppShell session={session} profile={profile} onSignOut={()=>void supabase.auth.signOut()}/>;
  if(path.startsWith("/workspace")&&session&&profileError)return <div className="loading-screen"><ShieldCheck size={30}/><h2>Workspace setup needed</h2><p>{profileError}</p><Button variant="outline" onClick={()=>void supabase.auth.signOut()}>Sign out</Button></div>;
- return <PublicSite route={path} navigate={navigate}/>;
+ return <AppSettingsContext.Provider value={{theme,setTheme,language,setLanguage,t}}><PublicSite route={path} navigate={navigate}/></AppSettingsContext.Provider>;
 }
