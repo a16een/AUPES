@@ -66,8 +66,8 @@ function AppSettingsMenu({workspace=false}:{workspace?:boolean}){
   document.addEventListener("keydown",handleKeyDown);
   return ()=>{document.removeEventListener("pointerdown",handlePointerDown);document.removeEventListener("keydown",handleKeyDown)};
  },[settingsOpen]);
- return <div ref={settingsRef} className={cx("settings-control",workspace&&"workspace-settings-control")} onMouseEnter={()=>setSettingsOpen(true)} onMouseLeave={()=>setSettingsOpen(false)} onFocusCapture={()=>setSettingsOpen(true)} onBlurCapture={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node|null))setSettingsOpen(false)}}>
-  <button className="nav-settings-button" type="button" aria-label={t("Settings")} aria-expanded={settingsOpen} title={t("Settings")} aria-haspopup="dialog" onClick={()=>{if(window.matchMedia("(hover: none)").matches)setSettingsOpen(v=>!v);else setSettingsOpen(true)}}><Settings size={17}/></button>
+ return <div ref={settingsRef} className={cx("settings-control",workspace&&"workspace-settings-control")} onMouseEnter={()=>setSettingsOpen(true)} onMouseLeave={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node|null))setSettingsOpen(false)}} onFocusCapture={()=>setSettingsOpen(true)} onBlurCapture={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node|null))setSettingsOpen(false)}}>
+  <button className="nav-settings-button" type="button" aria-label={t("Settings")} aria-expanded={settingsOpen} title={t("Settings")} aria-haspopup="dialog" onClick={()=>setSettingsOpen(true)}><Settings size={17}/></button>
   {settingsOpen&&<div className="settings-popover" role="dialog" aria-label={t("Site settings")}>
    <div className="settings-popover-heading"><Settings size={16}/><div><strong>{t("Site settings")}</strong><small>{t("Personalize your experience")}</small></div></div>
    <section className="settings-section" aria-labelledby="settings-appearance-label">
@@ -80,7 +80,7 @@ function AppSettingsMenu({workspace=false}:{workspace?:boolean}){
    <section className="settings-section" aria-labelledby="settings-language-label">
     <div id="settings-language-label" className="settings-section-label"><Languages size={15}/>{t("Language")}</div>
     <div className="settings-language-list" role="group" aria-label={t("Choose a language")}>
-     {LANGUAGE_OPTIONS.map(option=><button key={option.code} type="button" className={cx("settings-language-option",language===option.code&&"settings-language-option-active")} aria-pressed={language===option.code} onClick={()=>setLanguage(option.code)}><span className="settings-language-copy"><span className="settings-language-native" lang={option.htmlLang}>{option.native}</span><small>{option.english}</small></span>{language===option.code&&<Check size={16} className="settings-selected-check"/>}</button>)}
+     {LANGUAGE_OPTIONS.map(option=><button key={option.code} type="button" className={cx("settings-language-option",language===option.code&&"settings-language-option-active")} aria-pressed={language===option.code} onClick={()=>{setLanguage(option.code);if(window.matchMedia("(hover: none)").matches)setSettingsOpen(false)}}><span className="settings-language-copy"><span className="settings-language-native" lang={option.htmlLang}>{option.native}</span><small>{option.english}</small></span>{language===option.code&&<Check size={16} className="settings-selected-check"/>}</button>)}
     </div>
    </section>
    <p className="settings-hint">{t("Changes apply immediately.")}</p>
