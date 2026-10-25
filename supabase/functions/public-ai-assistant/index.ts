@@ -65,49 +65,73 @@ Deno.serve(async (req: Request) => {
     if (!messages.length || messages[messages.length - 1].role !== "user") return json({ error: "Please send a new question." }, 400);
     if (messages.reduce((total, message) => total + message.content.length, 0) > 8000) return json({ error: "This conversation is too long. Start a new chat and try again." }, 413);
 
-    // Gemini 3.8 Flash is supported through the Interactions API. The legacy
-    // generateContent route was stalling for this project and hitting the proxy timeout.
-    const model = "gemini-3.8-flash";
+    // Use a fast model first, with a second supported Flash-Lite model as a fallback.
+    // Each attempt has a short deadline so Supabase's request gateway does not time out first.
     const conversation = messages.map((message) =>
       (message.role === "user" ? "Visitor: " : "Assistant: ") + message.content
     ).join("\n\n");
-    console.info("Gemini interaction started", { model, messageCount: messages.length });
-    const startedAt = Date.now();
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({
-        model,
-        input: conversation,
-        system_instruction: systemInstruction,
-        generation_config: { max_output_tokens: 700, thinking_level: "low" },
-        store: false,
-      }),
-      signal: AbortSignal.timeout(15_000),
-    });
+    const models = ["gemini-3.5-flash-lite", "gemini-flash-lite-latest"];
+    let lastStatus = 503;
+    let timedOut = false;
 
-    const payload = await response.json().catch(() => ({}));
-    console.info("Gemini interaction response received", { status: response.status, durationMs: Date.now() - startedAt });
-    if (!response.ok) {
-      console.error("Gemini Interactions API request failed", response.status, JSON.stringify(payload).slice(0, 700));
-      if (response.status === 429) return json({ error: "The assistant is busy right now. Please wait a moment and try again." }, 429);
-      if (response.status === 401 || response.status === 403) return json({ error: "The Gemini API key was rejected. Check that GEMINI_API_KEY is valid and has access to the selected model." }, 502);
-      if (response.status === 404) return json({ error: "The configured Gemini model is unavailable. Check GEMINI_MODEL in Supabase Secrets or use the current model supported by your API key." }, 502);
-      return json({ error: "The AI provider returned an error. Please try again shortly." }, 502);
+    for (const model of models) {
+      const startedAt = Date.now();
+      try {
+        console.info("Gemini interaction started", { model, messageCount: messages.length });
+        const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          body: JSON.stringify({
+            model,
+            input: conversation,
+            system_instruction: systemInstruction,
+            generation_config: { max_output_tokens: 400, thinking_level: "low" },
+            store: false,
+          }),
+          signal: AbortSignal.timeout(6_000),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        console.info("Gemini interaction response received", { model, status: response.status, durationMs: Date.now() - startedAt });
+        if (response.ok) {
+          const answer = typeof payload?.output_text === "string"
+            ? payload.output_text.trim()
+            : (Array.isArray(payload?.steps) ? payload.steps
+                .filter((step: { type?: string }) => step?.type === "model_output")
+                .flatMap((step: { content?: Array<{ text?: string }> }) => Array.isArray(step.content) ? step.content : [])
+                .map((part: { text?: string }) => typeof part?.text === "string" ? part.text : "")
+                .join("")
+                .trim() : "");
+          if (answer) return json({ answer });
+          console.error("Gemini interaction returned no text", { model, payload: JSON.stringify(payload).slice(0, 500) });
+          lastStatus = 502;
+          continue;
+        }
+
+        lastStatus = response.status;
+        console.error("Gemini Interactions API request failed", { model, status: response.status, payload: JSON.stringify(payload).slice(0, 500) });
+        if (response.status === 429 || response.status === 503 || response.status >= 500) continue;
+        if (response.status === 401 || response.status === 403) {
+          return json({ error: "The Gemini API key was rejected. Check that GEMINI_API_KEY is valid and has access to the selected model." }, 502);
+        }
+        if (response.status === 404) {
+          return json({ error: "The configured Gemini models are unavailable to this API key. Check Gemini API access in Google AI Studio." }, 502);
+        }
+        return json({ error: "The AI provider rejected the request. Please try again shortly." }, 502);
+      } catch (error) {
+        if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+          timedOut = true;
+          console.error("Gemini interaction attempt timed out", { model, durationMs: Date.now() - startedAt });
+          continue;
+        }
+        throw error;
+      }
     }
-    const answer = typeof payload?.output_text === "string"
-      ? payload.output_text.trim()
-      : (Array.isArray(payload?.steps) ? payload.steps
-          .filter((step: { type?: string }) => step?.type === "model_output")
-          .flatMap((step: { content?: Array<{ text?: string }> }) => Array.isArray(step.content) ? step.content : [])
-          .map((part: { text?: string }) => typeof part?.text === "string" ? part.text : "")
-          .join("")
-          .trim() : "");
-    if (!answer) {
-      console.error("Gemini interaction returned no text", JSON.stringify(payload).slice(0, 700));
-      return json({ error: "I couldn't form an answer this time. Please try asking another way." }, 502);
-    }
-    return json({ answer });
+
+    if (timedOut) return json({ error: "The AI provider is responding too slowly right now. Please try again shortly." }, 504);
+    if (lastStatus === 429) return json({ error: "The AI assistant is busy right now. Please try again in a moment." }, 429);
+    if (lastStatus === 503 || lastStatus >= 500) return json({ error: "The AI provider is temporarily unavailable. Please try again shortly." }, 503);
+    return json({ error: "I couldn't form an answer this time. Please try again." }, 502);
   } catch (error) {
     if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
       console.error("Gemini interaction timed out", error.name);
