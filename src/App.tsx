@@ -275,7 +275,7 @@ function AppShell({session,profile,onSignOut}:{session:Session;profile:Profile;o
  },[assignments,session.user.id]);
  useEffect(()=>{
   const route=resolveWorkspaceRoute(window.location.pathname);
-  const disallowed=((page==="accounts"||page==="assignments")&&!admin)||(page==="evaluations"&&(admin||profile.role==="instructor"));
+  const disallowed=((page==="accounts"||page==="assignments")&&!admin)||(page==="evaluations"&&admin);
   if(disallowed){setPage("overview");setActiveAssignment(null);if(window.location.pathname!==WORKSPACE_ROOT)window.history.replaceState({},"",WORKSPACE_ROOT);setNotice({type:"info",text:"That page is not available for your account role."});return;}
   if(page==="fill"&&!busy){
    const match=assignments.find(a=>a.id===route.assignmentId&&a.evaluator_id===session.user.id&&a.status==="open");
@@ -287,7 +287,7 @@ function AppShell({session,profile,onSignOut}:{session:Session;profile:Profile;o
  const open=mine.filter(a=>a.status==="open");
  const nav=[
   {id:"overview" as Page,label:t("Overview"),icon:LayoutDashboard},
-  {id:"evaluations" as Page,label:t("My evaluations"),icon:ClipboardCheck,hide:profile.role==="instructor"||admin},
+  {id:"evaluations" as Page,label:t("My evaluations"),icon:ClipboardCheck,hide:admin},
   {id:"results" as Page,label:t("Performance results"),icon:ChartNoAxesCombined},
   {id:"assignments" as Page,label:t("Evaluation assignments"),icon:CalendarDays,hide:!admin},
   {id:"accounts" as Page,label:t("Account management"),icon:Users,hide:!admin}
@@ -314,7 +314,7 @@ function AppShell({session,profile,onSignOut}:{session:Session;profile:Profile;o
    </header>
    <main className="content-area workspace-content"><Notice notice={notice} onClose={()=>setNotice(null)}/>
     {page==="overview"&&<Dashboard profile={profile} mine={mine} assignments={assignments} people={people} summaries={summaries} admin={admin} busy={busy} navigate={navigate} start={a=>navigate("fill",a)} onUser={()=>setUserModal(true)} onAssignment={()=>setAssignmentModal(true)}/>}
-    {page==="evaluations"&&!admin&&profile.role!=="instructor"&&<EvaluationList assignments={mine} busy={busy} start={a=>navigate("fill",a)}/>}
+    {page==="evaluations"&&!admin&&<EvaluationList assignments={mine} busy={busy} start={a=>navigate("fill",a)}/>}
     {page==="results"&&<ResultsPage summaries={summaries} people={people} profile={profile} admin={admin}/>}
     {page==="accounts"&&admin&&<AccountsPage people={people} busy={busy} onCreate={()=>setUserModal(true)}/>}
     {page==="assignments"&&admin&&<AssignmentsPage assignments={assignments} busy={busy} onCreate={()=>setAssignmentModal(true)}/>}
