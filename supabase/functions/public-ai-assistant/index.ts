@@ -67,7 +67,7 @@ Deno.serve(async (req: Request) => {
 
     // Gemini 3.8 Flash is supported through the Interactions API. The legacy
     // generateContent route was stalling for this project and hitting the proxy timeout.
-    const model = (Deno.env.get("GEMINI_MODEL") || "gemini-3.8-flash").trim();
+    const model = "gemini-3.8-flash";
     const conversation = messages.map((message) =>
       (message.role === "user" ? "Visitor: " : "Assistant: ") + message.content
     ).join("\n\n");
