@@ -118,7 +118,7 @@ function PublicHeader({route,navigate}:{route:string;navigate:(to:string)=>void}
  const {t}=useAppSettings();
  const [menuOpen,setMenuOpen]=useState(false);
  const closeMenu=()=>setMenuOpen(false);
- const links=[{to:"/",label:t("Home")},{to:"/about",label:t("About")},{to:"/academics",label:t("Academics")},{to:"/research",label:t("Research")},{to:"/news",label:t("News")},{to:"/contact",label:t("Contact")}];
+ const links=[{to:"/",label:t("Home")},{to:"/academics",label:t("Academics")},{to:"/research",label:t("Research")},{to:"/news",label:t("News")},{to:"/contact",label:t("Contact")},{to:"/about",label:t("About")}];
  return <header className="site-nav public-header">
   <div className="nav-island nav-brand-island"><PublicLink to="/" navigate={navigate} className="university-brand-link"><span className="university-logo-box"><img src="/images/logo.png" alt={t("Ambo University logo")} onError={e=>{e.currentTarget.style.display="none"}}/><span className="logo-fallback"><GraduationCap size={27}/></span></span></PublicLink></div>
   <button className="public-menu-toggle icon-btn" type="button" aria-label={menuOpen?t("Close navigation"):t("Open navigation")} aria-expanded={menuOpen} onClick={()=>setMenuOpen(v=>!v)}><Menu size={20}/></button>
