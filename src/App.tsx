@@ -17,6 +17,24 @@ type Assignment = { id:string; evaluator_id:string; instructor_id:string; form_t
 type Notice = { type:"success"|"error"|"info"; text:string } | null;
 type Page = "overview"|"evaluations"|"results"|"accounts"|"assignments"|"fill";
 const FORMS:FormType[]=["student","department_head","peer","self"];
+const WORKSPACE_ROOT = "/app/workspace";
+function resolveWorkspaceRoute(pathname: string): { page: Page; assignmentId: string | null } {
+ let path = pathname;
+ while (path.length > 1 && path.endsWith("/")) path = path.slice(0, -1);
+ if (path === "/workspace") path = WORKSPACE_ROOT;
+ else if (path.startsWith("/workspace/")) path = WORKSPACE_ROOT + path.slice("/workspace".length);
+ if (path === WORKSPACE_ROOT || path === WORKSPACE_ROOT + "/") return { page: "overview", assignmentId: null };
+ let suffix = path.slice(WORKSPACE_ROOT.length);
+ if (suffix.startsWith("/")) suffix = suffix.slice(1);
+ if (suffix === "evaluations") return { page: "evaluations", assignmentId: null };
+ if (suffix === "results") return { page: "results", assignmentId: null };
+ if (suffix === "assignments") return { page: "assignments", assignmentId: null };
+ if (suffix === "accounts") return { page: "accounts", assignmentId: null };
+ if (suffix.startsWith("evaluate/")) return { page: "fill", assignmentId: suffix.slice("evaluate/".length).split("/")[0] || null };
+ if (suffix === "fill") return { page: "fill", assignmentId: null };
+ return { page: "overview", assignmentId: null };
+}
+
 const RATINGS:Rating[]=[5,4,3,2,1,0,"NA"];
 const cx=(...values:Array<string|false|null|undefined>)=>values.filter(Boolean).join(" ");
 
@@ -187,7 +205,7 @@ function InformationPage({route,navigate}:{route:string;navigate:(to:string)=>vo
 function LoginPage({navigate}:{navigate:(to:string)=>void}){
  const {t}=useAppSettings();
  const [email,setEmail]=useState("");const [password,setPassword]=useState("");const [reset,setReset]=useState(false);const [busy,setBusy]=useState(false);const [notice,setNotice]=useState<Notice>(null);
- async function submit(e:FormEvent){e.preventDefault();setBusy(true);setNotice(null);try{if(reset){const {error}=await supabase.auth.resetPasswordForEmail(email.trim(),{redirectTo:window.location.origin+"/sign-in"});if(error)throw error;setNotice({type:"success",text:"If this account exists, password reset instructions have been sent."});}else{const {error}=await supabase.auth.signInWithPassword({email:email.trim(),password});if(error)throw error;navigate("/workspace");}}catch(err){setNotice({type:"error",text:err instanceof Error?err.message:"Unable to sign in."});}finally{setBusy(false);}}
+ async function submit(e:FormEvent){e.preventDefault();setBusy(true);setNotice(null);try{if(reset){const {error}=await supabase.auth.resetPasswordForEmail(email.trim(),{redirectTo:window.location.origin+"/sign-in"});if(error)throw error;setNotice({type:"success",text:"If this account exists, password reset instructions have been sent."});}else{const {error}=await supabase.auth.signInWithPassword({email:email.trim(),password});if(error)throw error;navigate("/app/workspace");}}catch(err){setNotice({type:"error",text:err instanceof Error?err.message:"Unable to sign in."});}finally{setBusy(false);}}
  return <div className="auth-page"><main className="container auth-layout"><section className="auth-form-panel"><small className="kicker">{t(reset?"ACCOUNT RECOVERY":"YOUR UNIVERSITY WORKSPACE")}</small><h1>{t(reset?"Reset your password.":"Welcome back.")}</h1><p className="auth-lead">{t(reset?"Enter your university email to receive password-reset instructions.":"Sign in with the account provided by your AUPES administrator.")}</p><form onSubmit={submit} className="form-stack auth-form"><label>{t("Email address")}<input type="email" autoComplete="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@university.edu.et"/></label>{!reset&&<label>{t("Password")}<input type="password" autoComplete="current-password" required value={password} onChange={e=>setPassword(e.target.value)} placeholder={t("Enter your password")}/></label>}<Notice notice={notice}/><Button type="submit" disabled={busy} className="btn-lg full">{busy?<LoaderCircle size={17} className="spin"/>:<LockKeyhole size={17}/>} {busy?t("Please wait…"):reset?t("Send reset link"):t("Sign in")} <ArrowRight size={16}/></Button></form><button className="text-btn reset-btn" onClick={()=>{setReset(!reset);setNotice(null)}}>{reset?t("Return to sign in"):t("Forgot your password?")}</button><div className="login-note"><ShieldCheck size={16}/><span>{t("Accounts are provisioned by AUPES administrators. There is no public self-registration.")}</span></div><PublicLink to="/" navigate={navigate} className="auth-home-link">← {t("Back to the public site")}</PublicLink></section><aside className="auth-story"><div className="auth-story-mark"><img src="/images/logo.png" alt={t("Ambo University logo")} onError={e=>{e.currentTarget.style.display="none"}}/></div><small className="kicker">{t("AMBO UNIVERSITY · AUPES")}</small><h2>{t("Better teaching begins with honest feedback.")}</h2><p>{t("Return to your assigned evaluations, submit thoughtful feedback and review the insights available to your role.")}</p><div className="auth-story-points"><span><CheckCircle2 size={16}/> {t("Structured evaluation forms")}</span><span><CheckCircle2 size={16}/> {t("Defined scoring weights")}</span><span><CheckCircle2 size={16}/> {t("Role-aware access to results")}</span></div><div className="auth-story-foot"><GraduationCap size={18}/><span>{t("Academic quality is built one useful insight at a time.")}</span></div></aside></main></div>;
 }
 function PublicSite({route,navigate}:{route:string;navigate:(to:string)=>void}){const {t}=useAppSettings();
@@ -217,30 +235,94 @@ function EvaluationForm({assignment,onCancel,onSubmitted}:{assignment:Assignment
 
 function AppShell({session,profile,onSignOut}:{session:Session;profile:Profile;onSignOut:()=>void}){
  const {t}=useAppSettings();
- const [page,setPage]=useState<Page>("overview");const [mobileNav,setMobileNav]=useState(false);const [assignments,setAssignments]=useState<Assignment[]>([]);const [people,setPeople]=useState<Profile[]>([]);const [summaries,setSummaries]=useState<SummaryRow[]>([]);const [busy,setBusy]=useState(true);const [notice,setNotice]=useState<Notice>(null);const [refreshToken,setRefreshToken]=useState(0);const [query,setQuery]=useState("");const [activeAssignment,setActiveAssignment]=useState<Assignment|null>(null);const [userModal,setUserModal]=useState(false);const [assignmentModal,setAssignmentModal]=useState(false);
- const admin=profile.role==="admin";const refresh=()=>setRefreshToken(v=>v+1);const navigate=(next:Page)=>{setPage(next);setMobileNav(false);setNotice(null);};
+ const [page,setPage]=useState<Page>(()=>resolveWorkspaceRoute(window.location.pathname).page);
+ const [mobileNav,setMobileNav]=useState(false);
+ const [assignments,setAssignments]=useState<Assignment[]>([]);
+ const [people,setPeople]=useState<Profile[]>([]);
+ const [summaries,setSummaries]=useState<SummaryRow[]>([]);
+ const [busy,setBusy]=useState(true);
+ const [notice,setNotice]=useState<Notice>(null);
+ const [refreshToken,setRefreshToken]=useState(0);
+ const [activeAssignment,setActiveAssignment]=useState<Assignment|null>(null);
+ const [userModal,setUserModal]=useState(false);
+ const [assignmentModal,setAssignmentModal]=useState(false);
+ const admin=profile.role==="admin";
+ const refresh=()=>setRefreshToken(v=>v+1);
+ const navigate=(next:Page,assignment?:Assignment)=>{
+  const nextAssignment=assignment??activeAssignment;
+  if(next==="fill"&&!nextAssignment){setNotice({type:"error",text:"Open an available evaluation before navigating to the form."});return;}
+  setPage(next);setMobileNav(false);setNotice(null);
+  if(next==="fill")setActiveAssignment(nextAssignment);else setActiveAssignment(null);
+  const nextPath=next==="overview"?WORKSPACE_ROOT:next==="fill"?WORKSPACE_ROOT+"/evaluate/"+nextAssignment!.id:WORKSPACE_ROOT+"/"+next;
+  if(window.location.pathname!==nextPath)window.history.pushState({},"",nextPath);
+  window.scrollTo({top:0,behavior:"auto"});
+ };
  useEffect(()=>{let alive=true;async function load(){setBusy(true);try{
-   const a=await supabase.from("evaluation_assignments").select("*, instructor:profiles!evaluation_assignments_instructor_id_fkey(full_name,department,college), evaluator:profiles!evaluation_assignments_evaluator_id_fkey(full_name,role)").order("created_at",{ascending:false});if(a.error)throw a.error;if(alive)setAssignments((a.data??[]) as Assignment[]);
-   const s=await supabase.from("evaluation_summaries").select("*");if(s.error)throw s.error;if(alive)setSummaries((s.data??[]) as SummaryRow[]);
-   if(admin){const p=await supabase.from("profiles").select("id,full_name,email,role,department,college,is_active").order("full_name");if(p.error)throw p.error;if(alive)setPeople((p.data??[]) as Profile[]);}
+  const a=await supabase.from("evaluation_assignments").select("*, instructor:profiles!evaluation_assignments_instructor_id_fkey(full_name,department,college), evaluator:profiles!evaluation_assignments_evaluator_id_fkey(full_name,role)").order("created_at",{ascending:false});
+  if(a.error)throw a.error;if(alive)setAssignments((a.data??[]) as Assignment[]);
+  const s=await supabase.from("evaluation_summaries").select("*");if(s.error)throw s.error;if(alive)setSummaries((s.data??[]) as SummaryRow[]);
+  if(admin){const p=await supabase.from("profiles").select("id,full_name,email,role,department,college,is_active").order("full_name");if(p.error)throw p.error;if(alive)setPeople((p.data??[]) as Profile[]);}
  }catch(err){if(alive)setNotice({type:"error",text:err instanceof Error?t(err.message):t("Some workspace data could not be loaded.")});}finally{if(alive)setBusy(false);}}
  void load();return()=>{alive=false};
  },[session.user.id,profile.id,profile.role,admin,refreshToken]);
- const mine=assignments.filter(a=>a.evaluator_id===session.user.id);const open=mine.filter(a=>a.status==="open");const done=mine.filter(a=>a.status==="submitted");
- const nav=[{id:"overview" as Page,label:t("Overview"),icon:LayoutDashboard},{id:"evaluations" as Page,label:t("My evaluations"),icon:ClipboardCheck,hide:profile.role==="instructor"||admin},{id:"results" as Page,label:t("Performance results"),icon:ChartNoAxesCombined},{id:"assignments" as Page,label:t("Evaluation assignments"),icon:CalendarDays,hide:!admin},{id:"accounts" as Page,label:t("Account management"),icon:Users,hide:!admin}].filter(item=>!item.hide);
- const title=page==="overview"?t("Overview"):page==="evaluations"?t("My evaluations"):page==="results"?t("Performance results"):page==="accounts"?t("Account management"):page==="assignments"?t("Evaluation assignments"):activeAssignment?t(formLabel(activeAssignment.form_type)):t("Evaluation");
+ useEffect(()=>{
+  const sync=()=>{const route=resolveWorkspaceRoute(window.location.pathname);setPage(route.page);setMobileNav(false);
+   if(route.assignmentId){setActiveAssignment(assignments.find(a=>a.id===route.assignmentId&&a.evaluator_id===session.user.id&&a.status==="open")??null);}
+   else if(route.page!=="fill")setActiveAssignment(null);
+  };
+  window.addEventListener("popstate",sync);sync();return()=>window.removeEventListener("popstate",sync);
+ },[assignments,session.user.id]);
+ useEffect(()=>{
+  const route=resolveWorkspaceRoute(window.location.pathname);
+  const disallowed=((page==="accounts"||page==="assignments")&&!admin)||(page==="evaluations"&&(admin||profile.role==="instructor"));
+  if(disallowed){setPage("overview");setActiveAssignment(null);if(window.location.pathname!==WORKSPACE_ROOT)window.history.replaceState({},"",WORKSPACE_ROOT);setNotice({type:"info",text:"That page is not available for your account role."});return;}
+  if(page==="fill"&&!busy){
+   const match=assignments.find(a=>a.id===route.assignmentId&&a.evaluator_id===session.user.id&&a.status==="open");
+   if(match)setActiveAssignment(match);
+   else{setPage("overview");setActiveAssignment(null);if(window.location.pathname!==WORKSPACE_ROOT)window.history.replaceState({},"",WORKSPACE_ROOT);setNotice({type:"info",text:"This evaluation is unavailable, already submitted, or not assigned to your account."});}
+  }
+ },[page,admin,profile.role,assignments,busy,session.user.id]);
+ const mine=assignments.filter(a=>a.evaluator_id===session.user.id);
+ const open=mine.filter(a=>a.status==="open");
+ const nav=[
+  {id:"overview" as Page,label:t("Overview"),icon:LayoutDashboard},
+  {id:"evaluations" as Page,label:t("My evaluations"),icon:ClipboardCheck,hide:profile.role==="instructor"||admin},
+  {id:"results" as Page,label:t("Performance results"),icon:ChartNoAxesCombined},
+  {id:"assignments" as Page,label:t("Evaluation assignments"),icon:CalendarDays,hide:!admin},
+  {id:"accounts" as Page,label:t("Account management"),icon:Users,hide:!admin}
+ ].filter(item=>!item.hide);
  function complete(){setActiveAssignment(null);navigate("evaluations");setNotice({type:"success",text:"Evaluation submitted successfully. Thank you for contributing to teaching quality."});refresh();}
- return <div className="app-shell">{mobileNav&&<button className="mobile-scrim" aria-label={t("Close navigation")} onClick={()=>setMobileNav(false)}/>}<aside className={cx("sidebar",mobileNav&&"sidebar-open")}><div className="sidebar-brand"><Brand light/><button className="icon-btn close-side" onClick={()=>setMobileNav(false)} aria-label={t("Close navigation")}><X size={18}/></button></div><div className="institution-tag"><span><GraduationCap size={18}/></span><div><b>{t("Academic affairs")}</b><small>{t("Evaluation portal")}</small></div></div><small className="nav-caption">{t("WORKSPACE")}</small><nav className="side-nav">{nav.map(item=>{const Icon=item.icon;return <button key={item.id} className={cx("side-link",page===item.id&&"side-link-active")} onClick={()=>navigate(item.id)}><Icon size={18}/><span>{item.label}</span>{item.id==="evaluations"&&open.length>0&&<b>{open.length}</b>}</button>})}</nav><div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><b>{t("Need guidance?")}</b><small>{t("Contact your department administrator.")}</small></div></div><div className="sidebar-user"><Avatar name={profile.full_name||profile.email}/><div><b>{profile.full_name||profile.email}</b><small>{t(roleLabel(profile.role))}</small></div><button className="icon-btn" title={t("Sign out")} aria-label={t("Sign out")} onClick={onSignOut}><LogOut size={17}/></button></div></div></aside>
- <div className="main-area"><header className="topbar"><div className="topbar-left"><button className="icon-btn mobile-menu" onClick={()=>setMobileNav(true)} aria-label={t("Open navigation")}><Menu size={20}/></button><div className="breadcrumbs"><span>AUPES</span><i>/</i><b>{title}</b></div></div><div className="topbar-right"><span className="academic-year"><i/> {t("Academic year 2026/27")}</span><span className="top-user"><Avatar name={profile.full_name||profile.email}/><span><b>{profile.full_name||t("University member")}</b><small>{profile.department||t(roleLabel(profile.role))}</small></span><ChevronDown size={14}/></span><AppSettingsMenu workspace/></div></header><main className="content-area"><Notice notice={notice} onClose={()=>setNotice(null)}/>
- {page==="overview"&&<Dashboard profile={profile} mine={mine} assignments={assignments} people={people} summaries={summaries} admin={admin} busy={busy} navigate={navigate} start={a=>{setActiveAssignment(a);navigate("fill")}} onUser={()=>setUserModal(true)} onAssignment={()=>setAssignmentModal(true)}/>}
- {page==="evaluations"&&<EvaluationList assignments={mine} query={query} setQuery={setQuery} busy={busy} start={a=>{setActiveAssignment(a);navigate("fill")}}/>}
- {page==="results"&&<ResultsPage summaries={summaries} people={people} profile={profile} admin={admin}/>}
- {page==="accounts"&&admin&&<AccountsPage people={people} query={query} setQuery={setQuery} busy={busy} onCreate={()=>setUserModal(true)}/>}
- {page==="assignments"&&admin&&<AssignmentsPage assignments={assignments} busy={busy} onCreate={()=>setAssignmentModal(true)}/>}
- {page==="fill"&&activeAssignment&&<EvaluationForm assignment={activeAssignment} onCancel={()=>navigate("evaluations")} onSubmitted={complete}/>}
- </main><footer className="app-footer"><span>© {new Date().getFullYear()} AUPES · Ambo University</span><span><ShieldCheck size={14}/> {t("Secure academic evaluation")}</span></footer></div>
- {userModal&&<CreateUserModal session={session} onClose={()=>setUserModal(false)} onCreated={message=>{setUserModal(false);setNotice({type:"success",text:message});refresh()}}/>}
- {assignmentModal&&<CreateAssignmentModal people={people} admin={profile} onClose={()=>setAssignmentModal(false)} onCreated={message=>{setAssignmentModal(false);setNotice({type:"success",text:message});refresh()}}/>}
+ return <div className="app-shell workspace-shell">
+  {mobileNav&&<button className="mobile-scrim" aria-label={t("Close navigation")} onClick={()=>setMobileNav(false)}/>}
+  <aside className={cx("sidebar","workspace-sidebar",mobileNav&&"sidebar-open")}>
+   <div className="workspace-sidebar-heading"><span className="workspace-status-dot"/><span>{t("Workspace")}</span></div>
+   <nav className="side-nav workspace-side-nav" aria-label={t("Workspace navigation")}>
+    {nav.map(item=>{const Icon=item.icon;return <button key={item.id} type="button" title={item.label} aria-label={item.label} aria-current={page===item.id?"page":undefined} className={cx("side-link","workspace-side-link",page===item.id&&"side-link-active")} onClick={()=>navigate(item.id)}>
+     <span className="workspace-link-icon"><Icon size={18}/></span><span className="side-link-label">{item.label}</span>{item.id==="evaluations"&&open.length>0&&<b className="side-link-count">{open.length}</b>}
+    </button>})}
+   </nav>
+   <div className="sidebar-bottom workspace-sidebar-bottom"><div className="sidebar-user workspace-profile-row">
+    <Avatar name={profile.full_name||profile.email}/><div className="workspace-profile-copy"><b>{profile.full_name||profile.email}</b><small>{t(roleLabel(profile.role))}</small></div>
+    <button className="icon-btn workspace-signout" type="button" title={t("Sign out")} aria-label={t("Sign out")} onClick={onSignOut}><LogOut size={17}/></button>
+   </div></div>
+   <button className="icon-btn close-side" type="button" onClick={()=>setMobileNav(false)} aria-label={t("Close navigation")}><X size={18}/></button>
+  </aside>
+  <div className="main-area workspace-main">
+   <header className="topbar workspace-topbar"><div className="topbar-left"><button className="icon-btn mobile-menu" type="button" onClick={()=>setMobileNav(true)} aria-label={t("Open navigation")}><Menu size={20}/></button><span className="workspace-topbar-label">{t("Workspace")}</span></div>
+    <div className="topbar-right"><span className="workspace-role-chip">{admin?<ShieldCheck size={15}/>:<UserRound size={15}/>}<span>{t(roleLabel(profile.role))}</span></span><AppSettingsMenu workspace/></div>
+   </header>
+   <main className="content-area workspace-content"><Notice notice={notice} onClose={()=>setNotice(null)}/>
+    {page==="overview"&&<Dashboard profile={profile} mine={mine} assignments={assignments} people={people} summaries={summaries} admin={admin} busy={busy} navigate={navigate} start={a=>navigate("fill",a)} onUser={()=>setUserModal(true)} onAssignment={()=>setAssignmentModal(true)}/>}
+    {page==="evaluations"&&!admin&&profile.role!=="instructor"&&<EvaluationList assignments={mine} busy={busy} start={a=>navigate("fill",a)}/>}
+    {page==="results"&&<ResultsPage summaries={summaries} people={people} profile={profile} admin={admin}/>}
+    {page==="accounts"&&admin&&<AccountsPage people={people} busy={busy} onCreate={()=>setUserModal(true)}/>}
+    {page==="assignments"&&admin&&<AssignmentsPage assignments={assignments} busy={busy} onCreate={()=>setAssignmentModal(true)}/>}
+    {page==="fill"&&activeAssignment&&<EvaluationForm assignment={activeAssignment} onCancel={()=>navigate("evaluations")} onSubmitted={complete}/>}
+   </main>
+   <footer className="app-footer workspace-footer"><span>{t("Academic evaluation workspace")}</span><span><ShieldCheck size={14}/> {t("Secure academic evaluation")}</span></footer>
+  </div>
+  {userModal&&<CreateUserModal session={session} onClose={()=>setUserModal(false)} onCreated={message=>{setUserModal(false);setNotice({type:"success",text:message});refresh()}}/>}
+  {assignmentModal&&<CreateAssignmentModal people={people} admin={profile} onClose={()=>setAssignmentModal(false)} onCreated={message=>{setAssignmentModal(false);setNotice({type:"success",text:message});refresh()}}/>}
  </div>;
 }
 
@@ -248,10 +330,10 @@ function Dashboard({profile,mine,assignments,people,summaries,admin,busy,navigat
  const {t}=useAppSettings();
  const open=mine.filter(a=>a.status==="open");const done=mine.filter(a=>a.status==="submitted");
  const aggregate=useMemo(()=>[...new Set(summaries.map(r=>r.instructor_id))].map(id=>{const rows=summaries.filter(r=>r.instructor_id===id);return {id,rows,person:people.find(p=>p.id===id),score:finalWeightedScore(rows)}}).sort((a,b)=>(b.score??-1)-(a.score??-1)),[summaries,people]);
- const firstName=profile.full_name.trim().split(/\\s+/)[0];
- const title=admin?t("Good afternoon, administrator."):firstName?`${t("Welcome back,")} ${firstName}.`:`${t("Welcome back")}.`;
+ const firstName=profile.full_name.trim().split(/\s+/)[0];
+ const title=admin?t("Evaluation overview"):profile.role==="instructor"?t("Performance snapshot"):firstName?t("Your evaluation tasks")+", "+firstName:t("Your evaluation tasks");
  const myRows=summaries.filter(r=>r.instructor_id===profile.id);const final=finalWeightedScore(myRows);
- return <div className="page-stack"><section className="welcome-row"><div><small className="kicker"><i/> {t("YOUR ACADEMIC WORKSPACE")}</small><h1>{title}</h1><p>{admin?t("Manage accounts, organize evaluation cycles and monitor university-wide progress."):profile.role==="instructor"?t("Review your performance insights and track development throughout the academic year."):t("Your contribution helps strengthen teaching quality at Ambo University.")}</p></div><div className="welcome-actions">{admin?<><Button variant="outline" onClick={onUser}><Plus size={16}/> {t("Add account")}</Button><Button onClick={onAssignment}><ClipboardCheck size={16}/> {t("Assign evaluation")}</Button></>:profile.role!=="instructor"&&<Button onClick={()=>navigate("evaluations")}>{t("Open my evaluations")} <ArrowRight size={16}/></Button>}</div></section>
+ return <div className="page-stack"><section className="welcome-row"><div><small className="kicker"><i/> {t("WORKSPACE SNAPSHOT")}</small><h1>{title}</h1><p>{admin?t("Monitor responses, manage accounts and keep evaluation cycles moving."):profile.role==="instructor"?t("Review your weighted result and the feedback supporting it."):t("Find your open forms and contribute to a fair teaching review.")}</p></div><div className="welcome-actions">{admin?<><Button variant="outline" onClick={onUser}><Plus size={16}/> {t("Add account")}</Button><Button onClick={onAssignment}><ClipboardCheck size={16}/> {t("Assign evaluation")}</Button></>:profile.role!=="instructor"&&<Button onClick={()=>navigate("evaluations")}>{t("Open my evaluations")} <ArrowRight size={16}/></Button>}</div></section>
  <div className="stats-grid"><Stat label={t(admin?"Registered accounts":"Assigned evaluations")} value={busy?"—":admin?people.length:mine.length} detail={t(admin?"Across university roles":"For your account")} icon={admin?Users:FileText}/><Stat label={t(admin?"Open assignments":"Awaiting completion")} value={busy?"—":admin?assignments.filter(a=>a.status==="open").length:open.length} detail={t(admin?"Waiting for responses":open.length?"Keep the cycle moving":"You’re all caught up")} icon={Clock3} tone="gold"/><Stat label={t(admin?"Submitted evaluations":"Completed")} value={busy?"—":admin?assignments.filter(a=>a.status==="submitted").length:done.length} detail={t("Submitted successfully")} icon={CheckCircle2} tone="blue"/><Stat label={t(admin?"Instructors with results":"Final result")} value={busy?"—":admin?aggregate.length:final===null?t("Pending"):final.toFixed(1)+"%"} detail={t(admin?"Summary data available":"Weighted score out of 100")} icon={Award} tone="purple"/></div>
  <div className="dashboard-grid"><section className="panel"><div className="panel-heading"><div><small className="kicker">{t("PRIORITY")}</small><h2>{t(admin?"Evaluation cycle":profile.role==="instructor"?"Your results at a glance":"Evaluations to complete")}</h2></div>{!admin&&profile.role!=="instructor"&&<button className="inline-link" onClick={()=>navigate("evaluations")}>{t("View all")} <ArrowRight size={14}/></button>}</div>
  {admin?<div className="cycle-box"><span className="cycle-symbol"><Activity size={26}/></span><div><h3>{assignments.length?"Evaluation workspace is active":"Start the first evaluation cycle"}</h3><p>{assignments.length?"Follow assignments and outstanding forms to keep the evaluation process moving.":"Create evaluator accounts, then assign instructors and courses to launch evaluations."}</p><div className="progress-meta"><span>{assignments.filter(a=>a.status==="submitted").length} of {assignments.length} submissions</span><b>{assignments.length?Math.round(assignments.filter(a=>a.status==="submitted").length/assignments.length*100):0}%</b></div><div className="track"><i style={{width:(assignments.length?assignments.filter(a=>a.status==="submitted").length/assignments.length*100:0)+"%"}}/></div><div className="cycle-actions"><Button onClick={()=>navigate("assignments")}>{t("Manage assignments")} <ArrowRight size={15}/></Button><button className="inline-link" onClick={onUser}>{t("Provision an account")} <Plus size={14}/></button></div></div></div>
@@ -263,9 +345,14 @@ function Dashboard({profile,mine,assignments,people,summaries,admin,busy,navigat
  </div>;
 }
 
-function EvaluationList({assignments,query,setQuery,busy,start}:{assignments:Assignment[];query:string;setQuery:(v:string)=>void;busy:boolean;start:(a:Assignment)=>void}){const {t}=useAppSettings();
- const filtered=assignments.filter(a=>[a.course_title,a.course_code,a.instructor?.full_name,formLabel(a.form_type)].some(v=>v?.toLowerCase().includes(query.toLowerCase())));
- return <div className="page-stack"><section className="page-title-row"><div><small className="kicker">{t("YOUR TASKS")}</small><h1>{t("My evaluations")}</h1><p>{t("Complete assigned forms thoughtfully. Each rating contributes to a balanced review.")}</p></div><span className="count-tag">{assignments.filter(a=>a.status==="open").length} {t("open")}</span></section><div className="toolbar"><label className="search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t("Search courses or instructors…")}/></label><span>{filtered.length} {t("evaluations")}</span></div>{busy?<div className="loading-inline"><LoaderCircle className="spin" size={18}/> {t("Loading assignments…")}</div>:filtered.length?<div className="eval-grid">{filtered.map(a=><article className="eval-card" key={a.id}><div className="eval-card-top"><span className={"form-tag form-"+a.form_type}>{formCode(a.form_type)}</span><span className={"status-tag status-"+a.status}>{a.status==="open"?t("Awaiting response"):a.status==="submitted"?t("Submitted"):t("Closed")}</span></div><span className="course-monogram">{a.course_code.slice(0,2).toUpperCase()}</span><h3>{a.course_title}</h3><p className="course-code">{a.course_code} · {a.academic_year}</p><div className="eval-meta"><div><small>{t("Instructor")}</small><b>{a.instructor?.full_name||t("Assigned instructor")}</b></div><div><small>{t("Deadline")}</small><b>{dateText(a.due_date)}</b></div></div>{a.status==="open"?<Button onClick={()=>start(a)} className="full">{t("Start evaluation")} <ArrowRight size={15}/></Button>:<span className="submitted"><CheckCircle2 size={15}/>{a.status==="submitted"?t("Response recorded"):t("Assignment closed")}</span>}</article>)}</div>:<Empty icon={ClipboardCheck} title={t("No evaluations found")} detail={query?t("Try a different search term."):"New assignments will appear here when your department sets them up."}/>}</div>;
+function EvaluationList({assignments,busy,start}:{assignments:Assignment[];busy:boolean;start:(a:Assignment)=>void}){
+ const {t}=useAppSettings();const [query,setQuery]=useState("");const [statusFilter,setStatusFilter]=useState("all");
+ const filtered=assignments.filter(a=>[a.course_title,a.course_code,a.instructor?.full_name,formLabel(a.form_type)].some(v=>v?.toLowerCase().includes(query.toLowerCase()))&&(statusFilter==="all"||a.status===statusFilter));
+ return <div className="page-stack">
+  <section className="page-title-row"><div><small className="kicker">{t("YOUR TASKS")}</small><h1>{t("My evaluations")}</h1><p>{t("Find your assigned forms, check deadlines and continue open evaluations.")}</p></div><span className="count-tag">{assignments.filter(a=>a.status==="open").length} {t("open")}</span></section>
+  <div className="toolbar filter-toolbar"><label className="search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t("Search courses or instructors…")}/></label><div className="table-filters"><select aria-label={t("Filter by evaluation status")} value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}><option value="all">{t("All statuses")}</option><option value="open">{t("Awaiting response")}</option><option value="submitted">{t("Submitted")}</option><option value="closed">{t("Closed")}</option></select></div><span className="toolbar-count">{filtered.length} {t("evaluations")}</span></div>
+  {busy?<div className="loading-inline"><LoaderCircle className="spin" size={18}/> {t("Loading assignments…")}</div>:filtered.length?<div className="eval-grid">{filtered.map(a=><article className="eval-card workspace-eval-card" key={a.id}><div className="eval-card-top"><span className={"form-tag form-"+a.form_type}>{formCode(a.form_type)}</span><span className={"status-tag status-"+a.status}>{a.status==="open"?t("Awaiting response"):a.status==="submitted"?t("Submitted"):t("Closed")}</span></div><span className="course-monogram">{a.course_code.slice(0,2).toUpperCase()}</span><h3>{a.course_title}</h3><p className="course-code">{a.course_code} · {a.academic_year}</p><div className="eval-meta"><div><small>{t("Instructor")}</small><b>{a.instructor?.full_name||t("Assigned instructor")}</b></div><div><small>{t("Deadline")}</small><b>{dateText(a.due_date)}</b></div></div>{a.status==="open"?<Button onClick={()=>start(a)} className="full"><ClipboardCheck size={15}/>{t("Continue evaluation")} <ArrowRight size={15}/></Button>:<span className="submitted"><CheckCircle2 size={15}/>{a.status==="submitted"?t("Response recorded"):t("Assignment closed")}</span>}</article>)}</div>:<Empty icon={ClipboardCheck} title={t("No evaluations found")} detail={query||statusFilter!=="all"?t("Try a different search or filter."):t("New assignments will appear here when your department sets them up.")}/>}
+ </div>;
 }
 
 function ResultsPage({summaries,people,profile,admin}:{summaries:SummaryRow[];people:Profile[];profile:Profile;admin:boolean}){const {t}=useAppSettings();
@@ -278,12 +365,37 @@ function ResultsPage({summaries,people,profile,admin}:{summaries:SummaryRow[];pe
  </div>;
 }
 
-function AccountsPage({people,query,setQuery,busy,onCreate}:{people:Profile[];query:string;setQuery:(v:string)=>void;busy:boolean;onCreate:()=>void}){const {t}=useAppSettings();
- const filtered=people.filter(p=>[p.full_name,p.email,p.department,p.college,roleLabel(p.role)].some(v=>v?.toLowerCase().includes(query.toLowerCase())));
- return <div className="page-stack"><section className="page-title-row"><div><small className="kicker">{t("ACCESS & IDENTITY")}</small><h1>{t("Account management")}</h1><p>{t("Provision role-specific accounts for students, academic staff and University oversight.")}</p></div><Button onClick={onCreate}><Plus size={16}/> {t("Create account")}</Button></section><section className="panel"><div className="toolbar"><label className="search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t("Search name, email or role…")}/></label><span>{filtered.length} {t("accounts")}</span></div><div className="table-scroll"><table className="data-table"><thead><tr><th>{t("Account")}</th><th>{t("Role")}</th><th>{t("Department")}</th><th>{t("College / school")}</th><th>{t("Status")}</th></tr></thead><tbody>{filtered.map(p=><tr key={p.id}><td><span className="table-person"><Avatar name={p.full_name}/><span><b>{p.full_name||"Name not set"}</b><small>{p.email}</small></span></span></td><td><span className="role-tag">{t(roleLabel(p.role))}</span></td><td>{p.department||"—"}</td><td>{p.college||"—"}</td><td><span className={cx("status-tag",p.is_active?"status-active":"status-closed")}>{p.is_active?t("Active"):t("Inactive")}</span></td></tr>)}</tbody></table></div>{busy&&<div className="loading-inline"><LoaderCircle size={17} className="spin"/> {t("Loading accounts…")}</div>}{!filtered.length&&!busy&&<Empty icon={Users} title={t("No accounts found")} detail={query?t("Try another search."):t("Create the first account to start the evaluation cycle.")}/>}</section></div>;
+function AccountsPage({people,busy,onCreate}:{people:Profile[];busy:boolean;onCreate:()=>void}){
+ const {t}=useAppSettings();const [query,setQuery]=useState("");const [roleFilter,setRoleFilter]=useState("all");const [statusFilter,setStatusFilter]=useState("all");
+ const roles=[...new Set(people.map(p=>p.role))].sort();
+ const filtered=people.filter(p=>[p.full_name,p.email,p.department,p.college,roleLabel(p.role)].some(v=>v?.toLowerCase().includes(query.toLowerCase()))&&(roleFilter==="all"||p.role===roleFilter)&&(statusFilter==="all"||(statusFilter==="active"?p.is_active:!p.is_active)));
+ return <div className="page-stack">
+  <section className="page-title-row"><div><small className="kicker">{t("ACCESS & IDENTITY")}</small><h1>{t("Account management")}</h1><p>{t("Manage accounts by role and status, and provision access for university staff and students.")}</p></div><Button onClick={onCreate}><Plus size={16}/>{t("Create account")}</Button></section>
+  <section className="panel workspace-table-panel"><div className="toolbar filter-toolbar">
+   <label className="search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t("Search name, email or department…")}/></label>
+   <div className="table-filters"><select aria-label={t("Filter by role")} value={roleFilter} onChange={e=>setRoleFilter(e.target.value)}><option value="all">{t("All roles")}</option>{roles.map(role=><option key={role} value={role}>{t(roleLabel(role))}</option>)}</select><select aria-label={t("Filter by status")} value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}><option value="all">{t("All statuses")}</option><option value="active">{t("Active")}</option><option value="inactive">{t("Inactive")}</option></select></div>
+   <span className="toolbar-count">{filtered.length} / {people.length} {t("accounts")}</span>
+  </div><div className="table-scroll"><table className="data-table"><thead><tr><th>{t("Account")}</th><th>{t("Role")}</th><th>{t("Department")}</th><th>{t("College / school")}</th><th>{t("Status")}</th></tr></thead><tbody>{filtered.map(p=><tr key={p.id}><td><span className="table-person"><Avatar name={p.full_name}/><span><b>{p.full_name||t("Name not set")}</b><small>{p.email}</small></span></span></td><td><span className="role-tag">{t(roleLabel(p.role))}</span></td><td>{p.department||"—"}</td><td>{p.college||"—"}</td><td><span className={cx("status-tag",p.is_active?"status-active":"status-closed")}>{p.is_active?t("Active"):t("Inactive")}</span></td></tr>)}</tbody></table></div>
+  {busy&&<div className="loading-inline"><LoaderCircle size={17} className="spin"/> {t("Loading accounts…")}</div>}
+  {!filtered.length&&!busy&&<Empty icon={Users} title={t("No accounts found")} detail={query||roleFilter!=="all"||statusFilter!=="all"?t("Try changing your search or filters."):t("Create the first account to start the evaluation cycle.")}/>}
+  </section>
+ </div>;
 }
-function AssignmentsPage({assignments,busy,onCreate}:{assignments:Assignment[];busy:boolean;onCreate:()=>void}){const {t}=useAppSettings();
- return <div className="page-stack"><section className="page-title-row"><div><small className="kicker">{t("EVALUATION CYCLE")}</small><h1>{t("Evaluation assignments")}</h1><p>{t("Pair an evaluator with an instructor, a course and an academic term.")}</p></div><Button onClick={onCreate}><Plus size={16}/> {t("New assignment")}</Button></section><div className="stats-grid compact-stats"><Stat label={t("Total assignments")} value={assignments.length} detail={t("Across all forms")} icon={ClipboardCheck}/><Stat label={t("Open")} value={assignments.filter(a=>a.status==="open").length} detail={t("Awaiting response")} icon={Clock3} tone="gold"/><Stat label={t("Submitted")} value={assignments.filter(a=>a.status==="submitted").length} detail={t("Response recorded")} icon={CheckCircle2} tone="blue"/><Stat label={t("Evaluators")} value={new Set(assignments.map(a=>a.evaluator_id)).size} detail={t("Assigned participants")} icon={Users} tone="purple"/></div><section className="panel"><div className="panel-heading"><div><small className="kicker">{t("ASSIGNMENT REGISTER")}</small><h2>{t("All evaluation forms")}</h2></div><span>{assignments.length} {t("records")}</span></div><div className="table-scroll"><table className="data-table"><thead><tr><th>{t("Course / form")}</th><th>{t("Instructor")}</th><th>{t("Evaluator")}</th><th>{t("Term")}</th><th>{t("Due date")}</th><th>{t("Status")}</th></tr></thead><tbody>{assignments.map(a=><tr key={a.id}><td><b>{a.course_title}</b><small className="table-sub">{a.course_code} · {t(formLabel(a.form_type))}</small></td><td>{a.instructor?.full_name||"—"}</td><td>{a.evaluator?.full_name||"—"}<small className="table-sub">{a.evaluator?.role?t(roleLabel(a.evaluator.role)):""}</small></td><td>{a.academic_year}<small className="table-sub">Semester {a.semester}{a.batch?" · Batch "+a.batch:""}</small></td><td>{dateText(a.due_date)}</td><td><span className={"status-tag status-"+a.status}>{a.status}</span></td></tr>)}</tbody></table></div>{busy&&<div className="loading-inline"><LoaderCircle size={17} className="spin"/> {t("Loading assignments…")}</div>}{!assignments.length&&!busy&&<Empty icon={CalendarDays} title="No assignments yet" detail="Create a first assignment to launch an evaluation cycle."/>}</section></div>;
+
+function AssignmentsPage({assignments,busy,onCreate}:{assignments:Assignment[];busy:boolean;onCreate:()=>void}){
+ const {t}=useAppSettings();const [query,setQuery]=useState("");const [statusFilter,setStatusFilter]=useState("all");
+ const filtered=assignments.filter(a=>[a.course_title,a.course_code,a.instructor?.full_name,a.evaluator?.full_name,formLabel(a.form_type),a.academic_year].some(v=>v?.toLowerCase().includes(query.toLowerCase()))&&(statusFilter==="all"||a.status===statusFilter));
+ const openCount=assignments.filter(a=>a.status==="open").length;const submittedCount=assignments.filter(a=>a.status==="submitted").length;
+ return <div className="page-stack">
+  <section className="page-title-row"><div><small className="kicker">{t("EVALUATION CYCLE")}</small><h1>{t("Evaluation assignments")}</h1><p>{t("Track every evaluation by course, participant, academic term and response status.")}</p></div><Button onClick={onCreate}><Plus size={16}/>{t("New assignment")}</Button></section>
+  <div className="stats-grid compact-stats"><Stat label={t("Total assignments")} value={assignments.length} detail={t("All evaluation forms")} icon={ClipboardCheck}/><Stat label={t("Open")} value={openCount} detail={t("Awaiting response")} icon={Clock3} tone="gold"/><Stat label={t("Submitted")} value={submittedCount} detail={t("Response recorded")} icon={CheckCircle2} tone="blue"/><Stat label={t("Evaluators")} value={new Set(assignments.map(a=>a.evaluator_id)).size} detail={t("Assigned participants")} icon={Users} tone="purple"/></div>
+  <section className="panel workspace-table-panel"><div className="panel-heading"><div><small className="kicker">{t("ASSIGNMENT REGISTER")}</small><h2>{t("All evaluation forms")}</h2></div><span className="toolbar-count">{filtered.length} / {assignments.length} {t("records")}</span></div>
+   <div className="toolbar filter-toolbar assignment-toolbar"><label className="search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t("Search course, instructor or evaluator…")}/></label><div className="table-filters"><select aria-label={t("Filter by assignment status")} value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}><option value="all">{t("All statuses")}</option><option value="open">{t("Open")}</option><option value="submitted">{t("Submitted")}</option><option value="closed">{t("Closed")}</option></select></div></div>
+   <div className="table-scroll"><table className="data-table"><thead><tr><th>{t("Course / form")}</th><th>{t("Instructor")}</th><th>{t("Evaluator")}</th><th>{t("Term")}</th><th>{t("Due date")}</th><th>{t("Status")}</th></tr></thead><tbody>{filtered.map(a=><tr key={a.id}><td><b>{a.course_title}</b><small className="table-sub">{a.course_code} · {t(formLabel(a.form_type))}</small></td><td>{a.instructor?.full_name||"—"}</td><td>{a.evaluator?.full_name||"—"}<small className="table-sub">{a.evaluator?.role?t(roleLabel(a.evaluator.role)):""}</small></td><td>{a.academic_year}<small className="table-sub">{t("Semester")} {a.semester}{a.batch?" · "+t("Batch")+" "+a.batch:""}</small></td><td>{dateText(a.due_date)}</td><td><span className={cx("status-tag","status-"+a.status)}>{t(a.status==="open"?"Open":a.status==="submitted"?"Submitted":"Closed")}</span></td></tr>)}</tbody></table></div>
+   {busy&&<div className="loading-inline"><LoaderCircle size={17} className="spin"/> {t("Loading assignments…")}</div>}
+   {!filtered.length&&!busy&&<Empty icon={CalendarDays} title={t("No assignments found")} detail={query||statusFilter!=="all"?t("Try another search or status filter."):t("Create a first assignment to launch an evaluation cycle.")}/>}
+  </section>
+ </div>;
 }
 
 function CreateUserModal({session,onClose,onCreated}:{session:Session;onClose:()=>void;onCreated:(text:string)=>void}){const {t}=useAppSettings();
@@ -302,6 +414,7 @@ function CreateAssignmentModal({people,admin,onClose,onCreated}:{people:Profile[
 function normalizeRoute(){
  const raw=window.location.pathname.replace(/\/+$/,"")||"/";
  const aliases:Record<string,string>={"/about-us":"/about","/process":"/how-it-works","/evaluation-methodology":"/scoring","/terms":"/terms-of-use"};
+ if(raw==="/workspace"||raw.startsWith("/workspace/"))return "/app"+raw;
  return aliases[raw]||raw;
 }
 
@@ -322,19 +435,20 @@ export default function App(){
  const [theme,setTheme]=useState<ThemeMode>(()=>readStoredSetting("aupes-theme",["light","dark"] as const,"light"));
  const [language,setLanguage]=useState<LanguageCode>(()=>readStoredSetting("aupes-language",["en","am","om","ti","so"] as const,"en"));
  const t=(key:string)=>translate(language,key);
- 
  useEffect(()=>{document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;try{window.localStorage.setItem("aupes-theme",theme)}catch{}},[theme]);
  useEffect(()=>{document.documentElement.lang=language;try{window.localStorage.setItem("aupes-language",language)}catch{}},[language]);
  const [session,setSession]=useState<Session|null>(null);const [profile,setProfile]=useState<Profile|null>(null);const [authLoading,setAuthLoading]=useState(true);const [profileLoading,setProfileLoading]=useState(false);const [profileError,setProfileError]=useState("");const [path,setPath]=useState(normalizeRoute);
  const navigate=(to:string)=>{if(window.location.pathname!==to)window.history.pushState({},"",to);setPath(to);window.scrollTo({top:0,behavior:"auto"});};
+ useEffect(()=>{const current=window.location.pathname;if(current==="/workspace"||current.startsWith("/workspace/"))window.history.replaceState({},"","/app"+current);},[]);
  useEffect(()=>{const onPopState=()=>setPath(normalizeRoute());window.addEventListener("popstate",onPopState);return()=>window.removeEventListener("popstate",onPopState)},[]);
- useEffect(()=>{let alive=true;supabase.auth.getSession().then(({data,error})=>{if(!alive)return;if(error)setProfileError(error.message);setSession(data.session);setAuthLoading(false)});const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,next)=>setSession(next));return()=>{alive=false;subscription.unsubscribe()}},[]);
- useEffect(()=>{let alive=true;async function load(){if(!session){setProfile(null);setProfileError("");setProfileLoading(false);return;}setProfileLoading(true);const {data,error}=await supabase.from("profiles").select("id,full_name,email,role,department,college,is_active").eq("id",session.user.id).maybeSingle();if(!alive)return;if(error||!data){setProfile(null);setProfileError(error?.message||"Your profile has not been provisioned. Contact the AUPES administrator.");}else{setProfile(data as Profile);setProfileError("");}setProfileLoading(false)}void load();return()=>{alive=false}},[session]);
- useEffect(()=>{if(!authLoading&&session&&path==="/sign-in")navigate("/workspace");if(!authLoading&&!session&&path.startsWith("/workspace"))navigate("/sign-in")},[session,path,authLoading]);
+ useEffect(()=>{let alive=true;const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,next)=>setSession(next));async function loadSession(){try{const {data,error}=await supabase.auth.getSession();if(!alive)return;if(error)setProfileError(error.message);setSession(data.session);}catch(err){if(alive)setProfileError(err instanceof Error?err.message:"Unable to restore your session.");}finally{if(alive)setAuthLoading(false);}}void loadSession();return()=>{alive=false;subscription.unsubscribe()}},[]);
+ useEffect(()=>{let alive=true;async function load(){if(!session){setProfile(null);setProfileError("");setProfileLoading(false);return;}setProfileLoading(true);setProfileError("");try{const {data,error}=await supabase.from("profiles").select("id,full_name,email,role,department,college,is_active").eq("id",session.user.id).maybeSingle();if(error)throw error;if(!data)throw new Error("Your profile has not been provisioned. Contact the AUPES administrator.");if(alive)setProfile(data as Profile);}catch(err){if(alive){setProfile(null);setProfileError(err instanceof Error?err.message:"Unable to load your account profile.");}}finally{if(alive)setProfileLoading(false)}}void load();return()=>{alive=false}},[session]);
+ const workspacePath=path.startsWith("/app/workspace")||path.startsWith("/workspace");
+ useEffect(()=>{if(!authLoading&&session&&path==="/sign-in")navigate("/app/workspace");if(!authLoading&&!session&&workspacePath)navigate("/sign-in")},[session,path,authLoading,workspacePath]);
  if(authLoading)return <Loading label={t("Please wait…")}/>;
- if(path.startsWith("/workspace")&&session&&profileLoading)return <Loading label={t("Please wait…")}/>;
- if(path.startsWith("/workspace")&&session&&profile&&!profile.is_active)return <div className="loading-screen"><ShieldCheck size={29}/><h2>{t("Account paused")}</h2><p>{t("Your AUPES access is inactive. Contact the system administrator.")}</p><Button variant="outline" onClick={()=>void supabase.auth.signOut()}>{t("Sign out")}</Button></div>;
- if(path.startsWith("/workspace")&&session&&profile)return <AppSettingsContext.Provider value={{theme,setTheme,language,setLanguage,t}}><AppShell session={session} profile={profile} onSignOut={()=>void supabase.auth.signOut()}/></AppSettingsContext.Provider>;
- if(path.startsWith("/workspace")&&session&&profileError)return <div className="loading-screen"><ShieldCheck size={30}/><h2>{t("Workspace setup needed")}</h2><p>{t(profileError)}</p><Button variant="outline" onClick={()=>void supabase.auth.signOut()}>{t("Sign out")}</Button></div>;
+ if(workspacePath&&session&&profileLoading)return <Loading label={t("Please wait…")}/>;
+ if(workspacePath&&session&&profile&&!profile.is_active)return <div className="loading-screen"><ShieldCheck size={29}/><h2>{t("Account paused")}</h2><p>{t("Your AUPES access is inactive. Contact the system administrator.")}</p><Button variant="outline" onClick={()=>void supabase.auth.signOut()}>{t("Sign out")}</Button></div>;
+ if(workspacePath&&session&&profile)return <AppSettingsContext.Provider value={{theme,setTheme,language,setLanguage,t}}><AppShell session={session} profile={profile} onSignOut={()=>void supabase.auth.signOut()}/></AppSettingsContext.Provider>;
+ if(workspacePath&&session&&profileError)return <div className="loading-screen"><ShieldCheck size={30}/><h2>{t("Workspace setup needed")}</h2><p>{t(profileError)}</p><Button variant="outline" onClick={()=>void supabase.auth.signOut()}>{t("Sign out")}</Button></div>;
  return <AppSettingsContext.Provider value={{theme,setTheme,language,setLanguage,t}}><PublicSite route={path} navigate={navigate}/></AppSettingsContext.Provider>;
 }
