@@ -6,6 +6,7 @@ import {
   Languages, LayoutDashboard, LoaderCircle, LockKeyhole, LogOut, Mail, MapPin, Menu, Moon, Plus,
   Scale, Search, Settings, ShieldCheck, Sparkles, Sprout, Sun, UserRound, Users, X
 } from "lucide-react";
+import "./workspace.css";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, SUPABASE_KEY, SUPABASE_URL } from "./lib/supabase";
 import { FORM_META, FORM_QUESTIONS, ROLE_OPTIONS, formLabel, roleLabel, type FormType, type Question } from "./data/forms";
