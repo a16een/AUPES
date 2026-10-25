@@ -1,12 +1,13 @@
 import { FormEvent, createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity, ArrowRight, ArrowUpRight, Award, Bell, BookOpen, BookMarked, Building2, CalendarDays,
-  ChartNoAxesCombined, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp,
+  ChartNoAxesCombined, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Bot, MessageCircle, Send,
   ClipboardCheck, Clock3, ExternalLink, FileText, FlaskConical, Globe2, GraduationCap, Handshake, Leaf, Lightbulb,
   Languages, LayoutDashboard, LoaderCircle, LockKeyhole, LogOut, Mail, MapPin, Menu, Moon, Plus,
   Scale, Search, Settings, ShieldCheck, Sparkles, Sprout, Sun, UserRound, Users, X
 } from "lucide-react";
 import "./workspace.css";
+import "./ai-assistant.css";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, SUPABASE_KEY, SUPABASE_URL } from "./lib/supabase";
 import { FORM_META, FORM_QUESTIONS, ROLE_OPTIONS, formLabel, roleLabel, type FormType, type Question } from "./data/forms";
@@ -209,12 +210,73 @@ function LoginPage({navigate}:{navigate:(to:string)=>void}){
  async function submit(e:FormEvent){e.preventDefault();setBusy(true);setNotice(null);try{if(reset){const {error}=await supabase.auth.resetPasswordForEmail(email.trim(),{redirectTo:window.location.origin+"/sign-in"});if(error)throw error;setNotice({type:"success",text:"If this account exists, password reset instructions have been sent."});}else{const {error}=await supabase.auth.signInWithPassword({email:email.trim(),password});if(error)throw error;navigate("/app/workspace");}}catch(err){setNotice({type:"error",text:err instanceof Error?err.message:"Unable to sign in."});}finally{setBusy(false);}}
  return <div className="auth-page"><main className="container auth-layout"><section className="auth-form-panel"><small className="kicker">{t(reset?"ACCOUNT RECOVERY":"YOUR UNIVERSITY WORKSPACE")}</small><h1>{t(reset?"Reset your password.":"Welcome back.")}</h1><p className="auth-lead">{t(reset?"Enter your university email to receive password-reset instructions.":"Sign in with the account provided by your AUPES administrator.")}</p><form onSubmit={submit} className="form-stack auth-form"><label>{t("Email address")}<input type="email" autoComplete="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@university.edu.et"/></label>{!reset&&<label>{t("Password")}<input type="password" autoComplete="current-password" required value={password} onChange={e=>setPassword(e.target.value)} placeholder={t("Enter your password")}/></label>}<Notice notice={notice}/><Button type="submit" disabled={busy} className="btn-lg full">{busy?<LoaderCircle size={17} className="spin"/>:<LockKeyhole size={17}/>} {busy?t("Please wait…"):reset?t("Send reset link"):t("Sign in")} <ArrowRight size={16}/></Button></form><button className="text-btn reset-btn" onClick={()=>{setReset(!reset);setNotice(null)}}>{reset?t("Return to sign in"):t("Forgot your password?")}</button><div className="login-note"><ShieldCheck size={16}/><span>{t("Accounts are provisioned by AUPES administrators. There is no public self-registration.")}</span></div><PublicLink to="/" navigate={navigate} className="auth-home-link">← {t("Back to the public site")}</PublicLink></section><aside className="auth-story"><div className="auth-story-mark"><img src="/images/logo.png" alt={t("Ambo University logo")} onError={e=>{e.currentTarget.style.display="none"}}/></div><small className="kicker">{t("AMBO UNIVERSITY · AUPES")}</small><h2>{t("Better teaching begins with honest feedback.")}</h2><p>{t("Return to your assigned evaluations, submit thoughtful feedback and review the insights available to your role.")}</p><div className="auth-story-points"><span><CheckCircle2 size={16}/> {t("Structured evaluation forms")}</span><span><CheckCircle2 size={16}/> {t("Defined scoring weights")}</span><span><CheckCircle2 size={16}/> {t("Role-aware access to results")}</span></div><div className="auth-story-foot"><GraduationCap size={18}/><span>{t("Academic quality is built one useful insight at a time.")}</span></div></aside></main></div>;
 }
+type PublicAIMessage = { role: "user" | "model"; content: string };
+
+function PublicAIAssistant() {
+ const [open,setOpen]=useState(false);
+ const [draft,setDraft]=useState("");
+ const [messages,setMessages]=useState<PublicAIMessage[]>([]);
+ const [busy,setBusy]=useState(false);
+ const [error,setError]=useState("");
+ const endRef=useRef<HTMLDivElement|null>(null);
+ const inputRef=useRef<HTMLTextAreaElement|null>(null);
+ useEffect(()=>{if(open){endRef.current?.scrollIntoView({behavior:"smooth",block:"end"});const timer=window.setTimeout(()=>inputRef.current?.focus(),120);return()=>window.clearTimeout(timer)}},[open,messages,busy]);
+ async function send(question?:string){
+  const content=(question??draft).trim();
+  if(!content||busy)return;
+  const next=[...messages,{role:"user" as const,content}];
+  setMessages(next);setDraft("");setError("");setBusy(true);
+  try{
+   const {data,error:invokeError}=await supabase.functions.invoke("public-ai-assistant",{body:{messages:next.map(({role,content})=>({role,content}))}});
+   if(invokeError)throw invokeError;
+   if(data?.error)throw new Error(String(data.error));
+   if(typeof data?.answer!=="string"||!data.answer.trim())throw new Error("I couldn't answer just now. Please try again.");
+   setMessages([...next,{role:"model",content:data.answer.trim()}]);
+  }catch(err){
+   setError(err instanceof Error?err.message:"The assistant is temporarily unavailable. Please try again.");
+  }finally{setBusy(false)}
+ }
+ const suggestions=["How does AUPES work?","How are evaluation scores calculated?","How can I get an account?"];
+ return <div className="ai-assistant-root">
+  {open&&<section className="ai-assistant-card" role="dialog" aria-label="AUPES AI assistant" aria-modal="false">
+   <header className="ai-assistant-header">
+    <span className="ai-assistant-mark"><Bot size={21}/></span>
+    <div className="ai-assistant-heading"><strong>AUPES assistant</strong><small><i className="ai-assistant-online"/> Here to help with the portal</small></div>
+    <button type="button" className="ai-assistant-close" aria-label="Close assistant" onClick={()=>setOpen(false)}><X size={17}/></button>
+   </header>
+   <div className="ai-assistant-messages" aria-live="polite">
+    {!messages.length&&<div className="ai-assistant-welcome">
+     <span className="ai-assistant-eyebrow">AI HELP DESK</span><h3>Hi there. What can I help you with?</h3>
+     <p>Ask about AUPES, evaluation forms, scoring, or getting access to the portal.</p>
+     <div className="ai-assistant-suggestions">{suggestions.map(item=><button type="button" key={item} onClick={()=>void send(item)} disabled={busy}>{item}</button>)}</div>
+    </div>}
+    {messages.map((message,index)=><div key={index} className={"ai-assistant-message "+(message.role==="user"?"user":"assistant")}>
+     {message.role==="model"&&<span className="ai-assistant-avatar"><Sparkles size={13}/></span>}
+     <div className="ai-assistant-bubble">{message.content}</div>
+    </div>)}
+    {busy&&<div className="ai-assistant-typing"><span className="ai-assistant-avatar"><Sparkles size={13}/></span><span>Thinking</span><span className="ai-assistant-typing-dots"><i/><i/><i/></span></div>}
+    {error&&<div className="ai-assistant-message assistant ai-assistant-error"><span className="ai-assistant-avatar"><CircleHelp size={13}/></span><div className="ai-assistant-bubble">{error}</div></div>}
+    <div ref={endRef}/>
+   </div>
+   <form className="ai-assistant-form" onSubmit={event=>{event.preventDefault();void send()}}>
+    <div className="ai-assistant-input-wrap"><textarea ref={inputRef} className="ai-assistant-input" rows={1} maxLength={1200} value={draft} onChange={event=>setDraft(event.target.value)} onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();void send()}}} placeholder="Ask a question…" aria-label="Your question" disabled={busy}/>
+     <button className="ai-assistant-send" type="submit" disabled={busy||!draft.trim()} aria-label="Send message">{busy?<LoaderCircle className="spin" size={16}/>:<Send size={16}/>}</button>
+    </div>
+    <div className="ai-assistant-footnote"><span>AI answers can make mistakes.</span><button type="button" className="ai-assistant-reset" onClick={()=>{setMessages([]);setDraft("");setError("");inputRef.current?.focus()}}>New chat</button></div>
+   </form>
+  </section>}
+  <button type="button" className="ai-assistant-launcher" onClick={()=>setOpen(value=>!value)} aria-label={open?"Close AUPES assistant":"Open AUPES AI assistant"} aria-expanded={open}>
+   {open?<X size={21}/>:<><MessageCircle size={21}/><span className="ai-assistant-launcher-label">Ask AI</span><Sparkles className="ai-assistant-launcher-sparkle" size={11}/></>}
+  </button>
+ </div>;
+}
+
 function PublicSite({route,navigate}:{route:string;navigate:(to:string)=>void}){const {t}=useAppSettings();
  const pageTitle=route==="/"?"AUPES · Ambo University Performance Evaluation System":route==="/sign-in"||route==="/workspace"?"Sign in · AUPES":(PAGE_COPY[route]?.title?PAGE_COPY[route].title+" · AUPES":"Page not found · AUPES");
  useEffect(()=>{document.title=pageTitle},[pageTitle]);
- if(route==="/sign-in"||route==="/workspace")return <LoginPage navigate={navigate}/>;
+ if(route==="/sign-in"||route==="/workspace")return <><LoginPage navigate={navigate}/><PublicAIAssistant/></>;
  const known=["/","/about","/academics","/research","/news","/how-it-works","/scoring","/privacy","/contact","/terms-of-use"];
- return <div className="landing public-site"><PublicHeader route={route} navigate={navigate}/>{route==="/" ? <LandingHome navigate={navigate}/>:known.includes(route)?<InformationPage route={route} navigate={navigate}/>:<main className="container public-not-found"><small className="kicker">{t("PAGE NOT FOUND")}</small><h1>{t("We couldn’t find that page.")}</h1><p>{t("The address may have changed, or the page may no longer exist.")}</p><Button onClick={()=>navigate("/")}>{t("Return home")} <ArrowRight size={15}/></Button></main>}<PublicFooter navigate={navigate}/></div>;
+ return <><div className="landing public-site"><PublicHeader route={route} navigate={navigate}/>{route==="/" ? <LandingHome navigate={navigate}/>:known.includes(route)?<InformationPage route={route} navigate={navigate}/>:<main className="container public-not-found"><small className="kicker">{t("PAGE NOT FOUND")}</small><h1>{t("We couldn’t find that page.")}</h1><p>{t("The address may have changed, or the page may no longer exist.")}</p><Button onClick={()=>navigate("/")}>{t("Return home")} <ArrowRight size={15}/></Button></main>}<PublicFooter navigate={navigate}/></div><PublicAIAssistant/></>;
 }
 
 function Stat({label,value,detail,icon:Icon,tone="green"}:{label:string;value:string|number;detail:string;icon:typeof Users;tone?:string}){const {t}=useAppSettings();return <article className="stat"><span className={"stat-icon tone-"+tone}><Icon size={19}/></span><span className="stat-label">{t(label)}</span><strong>{value}</strong><small>{t(detail)}</small></article>}
