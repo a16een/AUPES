@@ -54,7 +54,14 @@ const PUBLIC_LINKS=[{to:"/about",label:"About AUPES"},{to:"/how-it-works",label:
 function AppSettingsMenu({workspace=false}:{workspace?:boolean}){
  const {theme,setTheme,language,setLanguage,t}=useAppSettings();
  const [settingsOpen,setSettingsOpen]=useState(false);
+  const [settingsMounted,setSettingsMounted]=useState(false);
  const settingsRef=useRef<HTMLDivElement|null>(null);
+  useEffect(()=>{
+    if(settingsOpen){setSettingsMounted(true);return;}
+    if(!settingsMounted)return;
+    const timer=window.setTimeout(()=>setSettingsMounted(false),180);
+    return ()=>window.clearTimeout(timer);
+  },[settingsOpen,settingsMounted]);
  useEffect(()=>{
   if(!settingsOpen)return;
   const handlePointerDown=(event:PointerEvent)=>{
@@ -68,7 +75,7 @@ function AppSettingsMenu({workspace=false}:{workspace?:boolean}){
  },[settingsOpen]);
  return <div ref={settingsRef} className={cx("settings-control",workspace&&"workspace-settings-control")} onMouseEnter={()=>setSettingsOpen(true)} onMouseLeave={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node|null))setSettingsOpen(false)}} onFocusCapture={()=>setSettingsOpen(true)} onBlurCapture={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node|null))setSettingsOpen(false)}}>
   <button className="nav-settings-button" type="button" aria-label={t("Settings")} aria-expanded={settingsOpen} title={t("Settings")} aria-haspopup="dialog" onClick={()=>setSettingsOpen(true)}><Settings size={17}/></button>
-  {settingsOpen&&<div className="settings-popover" role="dialog" aria-label={t("Site settings")}>
+  {settingsMounted&&<div className={cx("settings-popover",settingsOpen&&"settings-popover-open")} role="dialog" aria-label={t("Site settings")} aria-hidden={!settingsOpen}>
    <div className="settings-popover-heading"><Settings size={16}/><div><strong>{t("Site settings")}</strong><small>{t("Personalize your experience")}</small></div></div>
    <section className="settings-section" aria-labelledby="settings-appearance-label">
     <div id="settings-appearance-label" className="settings-section-label">{t("Appearance")}</div>
