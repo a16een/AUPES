@@ -109,7 +109,10 @@ Deno.serve(async (req: Request) => {
     }
     return json({ answer });
   } catch (error) {
-    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {\n      console.error("Gemini interaction timed out", error.name);\n      return json({ error: "The AI provider took too long to respond. Please try again." }, 504);\n    }
+    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+      console.error("Gemini interaction timed out", error.name);
+      return json({ error: "The AI provider took too long to respond. Please try again." }, 504);
+    }
     if (error instanceof SyntaxError) return json({ error: "Please send a valid chat message." }, 400);
     console.error("AUPES public assistant error", error instanceof Error ? error.message : "Unknown error");
     return json({ error: "Unexpected assistant error. Please try again shortly." }, 500);
