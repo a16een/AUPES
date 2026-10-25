@@ -1,0 +1,3 @@
+# Public, unauthenticated visitor chat. The function validates input and uses only a server-side Gemini secret.
+[functions.public-ai-assistant]
+verify_jwt = false
