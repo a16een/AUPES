@@ -65,7 +65,7 @@ Deno.serve(async (req: Request) => {
     if (!messages.length || messages[messages.length - 1].role !== "user") return json({ error: "Please send a new question." }, 400);
     if (messages.reduce((total, message) => total + message.content.length, 0) > 8000) return json({ error: "This conversation is too long. Start a new chat and try again." }, 413);
 
-    const model = (Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash").trim();
+    const model = (Deno.env.get("GEMINI_MODEL") || "gemini-3.8-flash").trim();
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
