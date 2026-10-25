@@ -2803,7 +2803,36 @@ const DYNAMIC_UI_TRANSLATIONS:Partial<Record<LanguageCode,Record<string,string>>
   }
 };
 
+
+
+const FINAL_COPY_TRANSLATIONS:Partial<Record<LanguageCode,Record<string,string>>>={
+  "am": {
+    "Scoring": "የውጤት አሰጣጥ",
+    "Privacy": "ግላዊነት",
+    "Ambo University logo": "የአምቦ ዩኒቨርሲቲ አርማ",
+    "Campus and natural surroundings": "የዩኒቨርሲቲ ግቢና ተፈጥሯዊ አካባቢ"
+  },
+  "om": {
+    "Scoring": "Mala madaallii",
+    "Privacy": "Iccitii dhuunfaa",
+    "Ambo University logo": "Mallattoo Yunivarsiitii Amboo",
+    "Campus and natural surroundings": "Mooraa yunivarsiitii fi naannoo uumamaa"
+  },
+  "ti": {
+    "Scoring": "ምምዛን ነጥቢ",
+    "Privacy": "ብሕትውና",
+    "Ambo University logo": "ምልክት ዩኒቨርሲቲ ኣምቦ",
+    "Campus and natural surroundings": "ካምፓስን ተፈጥሮኣዊ ከባቢን"
+  },
+  "so": {
+    "Scoring": "Dhibcaha",
+    "Privacy": "Asturnaan",
+    "Ambo University logo": "Astaanta Jaamacadda Ambo",
+    "Campus and natural surroundings": "Xarunta jaamacadda iyo deegaanka dabiiciga ah"
+  }
+};
+
 /** Translate an interface string with a safe source-copy fallback. */
 export function translate(language:LanguageCode,key:string):string{
- return UI_TRANSLATIONS[language][key]??EXTENDED_TRANSLATIONS[language]?.[key]??ADDITIONAL_TRANSLATIONS[language]?.[key]??LONG_COPY_TRANSLATIONS[language]?.[key]??DYNAMIC_UI_TRANSLATIONS[language]?.[key]??UI_TRANSLATIONS.en[key]??key;
+ return UI_TRANSLATIONS[language][key]??EXTENDED_TRANSLATIONS[language]?.[key]??ADDITIONAL_TRANSLATIONS[language]?.[key]??LONG_COPY_TRANSLATIONS[language]?.[key]??DYNAMIC_UI_TRANSLATIONS[language]?.[key]??FINAL_COPY_TRANSLATIONS[language]?.[key]??UI_TRANSLATIONS.en[key]??key;
 }
