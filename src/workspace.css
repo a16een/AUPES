@@ -232,9 +232,12 @@ html[data-theme="dark"] .workspace-shell .workspace-signout:hover{background:#39
 
 
 /* Per-rating context and AI feedback synthesis */
-.workspace-shell .rating-reason{display:flex;flex-direction:column;gap:6px;margin:10px 0 2px;max-width:100%}
-.workspace-shell .rating-reason>span{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:var(--muted)}
-.workspace-shell .rating-reason>span small{font-size:10px;font-weight:500}
+.workspace-shell .rating-reason{grid-column:1 / -1;display:flex;flex-direction:column;gap:7px;margin:0 0 2px;max-width:100%}
+.workspace-shell .rating-reason summary{display:flex;align-items:center;gap:7px;width:max-content;max-width:100%;cursor:pointer;list-style:none;font-size:11px;font-weight:700;color:var(--muted)}
+.workspace-shell .rating-reason summary::-webkit-details-marker{display:none}
+.workspace-shell .rating-reason summary:before{content:"+";display:grid;place-items:center;width:17px;height:17px;border:1px solid var(--line);border-radius:5px;font-size:13px;line-height:1}
+.workspace-shell .rating-reason[open] summary:before{content:"−"}
+.workspace-shell .rating-reason summary small{font-size:10px;font-weight:500}
 .workspace-shell .rating-reason textarea{width:100%;min-height:54px;resize:vertical;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:inherit;font-size:12px;line-height:1.5}
 .workspace-shell .rating-reason textarea:focus{outline:2px solid var(--accent,#477a54);outline-offset:1px}
 .workspace-shell .rating-reason textarea::placeholder{color:var(--muted)}
