@@ -58,3 +58,30 @@ Upload your two image assets into `public/images/` using the exact paths below:
 - `public/images/home-hero.png` — campus or nature photo for the right side of the homepage hero.
 
 The folder contains `public/images/README.md` with sizing tips and upload instructions. Both images are loaded directly from `/images/logo.png` and `/images/home-hero.png`; keep their names case-sensitive and exact.
+
+## Public AI assistant (Gemini)
+
+The public pages include a floating **Ask AI** button. It opens a compact chat card and sends questions to the `public-ai-assistant` Supabase Edge Function. The Gemini API key is read only on the server.
+
+### Configure the Gemini key
+
+1. Open the AUPES Supabase project: `gzflsosiisozehnludjg`.
+2. Go to **Edge Functions → Secrets** (the project’s Edge Function secrets/environment variables).
+3. Add a secret with this exact name: **`GEMINI_API_KEY`**.
+4. Paste the API key you created in Google AI Studio as the secret value, then save it.
+5. Deploy the `public-ai-assistant` Edge Function from this branch.
+
+Optional: set `GEMINI_MODEL` as another Edge Function secret to override the default model (`gemini-2.5-flash`).
+
+**Never** put the Gemini key in `src/`, `.env` variables prefixed with `VITE_`, Netlify frontend variables, or commit it to GitHub. The browser calls Supabase; only the Edge Function calls Gemini. Do not send the key to ChatGPT or include it in screenshots/logs.
+
+### Deploy
+
+From the repository root, after linking the Supabase CLI to the project:
+
+```sh
+supabase secrets set GEMINI_API_KEY=YOUR_GEMINI_API_KEY --project-ref gzflsosiisozehnludjg
+supabase functions deploy public-ai-assistant --project-ref gzflsosiisozehnludjg
+```
+
+Replace `YOUR_GEMINI_API_KEY` locally with the key value; do not commit that command or value to a file. The function is configured for public, unauthenticated visitor requests and applies input-length checks, a best-effort per-instance request throttle, and a short request timeout. Set usage quotas/budgets for the Gemini API in Google AI Studio/Google Cloud as an additional spend safeguard.
