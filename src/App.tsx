@@ -378,7 +378,7 @@ function AppShell({session,profile,onSignOut}:{session:Session;profile:Profile;o
     {page==="overview"&&<Dashboard profile={profile} mine={mine} assignments={assignments} people={people} summaries={summaries} admin={admin} busy={busy} navigate={navigate} start={a=>navigate("fill",a)} onUser={()=>setUserModal(true)} onAssignment={()=>setAssignmentModal(true)}/>}
     {page==="evaluations"&&!admin&&<EvaluationList assignments={mine} busy={busy} start={a=>navigate("fill",a)}/>}
     {page==="results"&&<ResultsPage summaries={summaries} people={people} profile={profile} admin={admin}/>}
-    {page==="accounts"&&admin&&<AccountsPage people={people} busy={busy} session={session} onCreate={()=>setUserModal(true)}/>}
+    {page==="accounts"&&admin&&<AccountsPage people={people} busy={busy} session={session} onCreate={()=>setUserModal(true)} onRefresh={refresh}/>}
     {page==="assignments"&&admin&&<AssignmentsPage assignments={assignments} busy={busy} onCreate={()=>setAssignmentModal(true)}/>}
     {page==="fill"&&activeAssignment&&<EvaluationForm assignment={activeAssignment} onCancel={()=>navigate("evaluations")} onSubmitted={complete}/>}
    </main>
@@ -458,9 +458,9 @@ function downloadCredentialsPdf(accounts:GeneratedAccount[],role:string){
  const xref=pdf.length;pdf+="xref\n0 "+objects.length+"\n0000000000 65535 f \n";
  for(let i=1;i<objects.length;i++)pdf+=String(offsets[i]).padStart(10,"0")+" 00000 n \n";
  pdf+="trailer\n<< /Size "+objects.length+" /Root 1 0 R >>\nstartxref\n"+xref+"\n%%EOF";
- const blob=new Blob([pdf],{type:"application/pdf"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="aupes-"+role+"-accounts-"+new Date().toISOString().slice(0,10)+".pdf";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+ const blob=new Blob([pdf],{type:"application/pdf"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="aupes-"+role+"-accounts-"+new Date().toISOString().slice(0,10)+".pdf";document.body.appendChild(a);a.click();a.remove();window.setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
-function AccountsPage({people,busy,session,onCreate}:{people:Profile[];busy:boolean;session:Session;onCreate:()=>void}){
+function AccountsPage({people,busy,session,onCreate,onRefresh}:{people:Profile[];busy:boolean;session:Session;onCreate:()=>void;onRefresh:()=>void}){
  const {t}=useAppSettings();const [query,setQuery]=useState("");const [roleFilter,setRoleFilter]=useState("all");const [statusFilter,setStatusFilter]=useState("all");
  const [count,setCount]=useState("40");const [bulkRole,setBulkRole]=useState("student");const [department,setDepartment]=useState("");const [college,setCollege]=useState("");const [generating,setGenerating]=useState(false);const [bulkError,setBulkError]=useState("");const [bulkNotice,setBulkNotice]=useState("");const [generated,setGenerated]=useState<GeneratedAccount[]>([]);const [failures,setFailures]=useState<string[]>([]);
  const roles=[...new Set(people.map(p=>p.role))].sort();
@@ -473,7 +473,7 @@ function AccountsPage({people,busy,session,onCreate}:{people:Profile[];busy:bool
    const response=await fetch(SUPABASE_URL+"/functions/v1/admin-create-user",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,apikey:SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({action:"bulk",count:amount,role:bulkRole,department,college})});
    const result=await response.json();if(!response.ok&&!(result.created?.length))throw new Error(result.error||t("Unable to generate accounts."));
    const accounts=(result.created??[]) as GeneratedAccount[];setGenerated(accounts);setFailures(result.failures??[]);
-   if(accounts.length){downloadCredentialsPdf(accounts,bulkRole);setBulkNotice(t("Created")+" "+accounts.length+" "+t("of")+" "+amount+" "+t("accounts")+". "+t("The credentials PDF has been downloaded."));window.dispatchEvent(new CustomEvent("aupes:accounts-created"));}
+   if(accounts.length){downloadCredentialsPdf(accounts,bulkRole);setBulkNotice(t("Created")+" "+accounts.length+" "+t("of")+" "+amount+" "+t("accounts")+". "+t("The credentials PDF has been downloaded."));onRefresh();}
    else setBulkError(t("No accounts were created.")+(result.error?" "+result.error:""));
   }catch(err){setBulkError(err instanceof Error?err.message:t("Unable to generate accounts."));}
   finally{setGenerating(false);}
