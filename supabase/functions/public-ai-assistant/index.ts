@@ -58,6 +58,7 @@ Deno.serve(async (req: Request) => {
     let conversation = "";
     let activeInstruction = systemInstruction;
     let maxOutputTokens = 400;
+    let messageCount = 0;
 
     if (isFeedbackSummary) {
       if (typeof body.feedback !== "string" || !body.feedback.trim()) {
@@ -82,6 +83,7 @@ Distinguish recurring patterns from isolated comments when the supplied data all
       });
       if (!messages.length || messages[messages.length - 1].role !== "user") return json({ error: "Please send a new question." }, 400);
       if (messages.reduce((total, message) => total + message.content.length, 0) > 8000) return json({ error: "This conversation is too long. Start a new chat and try again." }, 413);
+      messageCount = messages.length;
       conversation = messages.map((message) =>
         (message.role === "user" ? "Visitor: " : "Assistant: ") + message.content
       ).join("\n\n");
@@ -96,7 +98,7 @@ Distinguish recurring patterns from isolated comments when the supplied data all
     for (const model of models) {
       const startedAt = Date.now();
       try {
-        console.info("Gemini interaction started", { model, messageCount: messages.length });
+        console.info("Gemini interaction started", { model, messageCount, task: isFeedbackSummary ? "summarize_feedback" : "chat" });
         const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
