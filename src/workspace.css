@@ -246,3 +246,25 @@ html[data-theme="dark"] .workspace-shell .workspace-signout:hover{background:#39
 .workspace-shell .ai-review-toolbar p{margin:4px 0 0;color:var(--muted);font-size:12px}
 .workspace-shell .ai-review-result{white-space:pre-wrap;line-height:1.75;font-size:13px;color:var(--ink);padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--canvas)}
 .workspace-shell .ai-review-reasons{white-space:pre-wrap;line-height:1.65;font-size:12px;color:var(--muted);max-height:260px;overflow:auto}
+
+
+/* Admin bulk account generation */
+.workspace-shell .bulk-account-panel{padding:clamp(18px,2.4vw,28px);display:grid;gap:20px}
+.workspace-shell .bulk-account-heading{display:flex;align-items:flex-start;gap:14px}
+.workspace-shell .bulk-account-icon{display:grid;place-items:center;flex:0 0 44px;height:44px;border-radius:14px;background:var(--canvas);border:1px solid var(--line);color:var(--accent,#477a54)}
+.workspace-shell .bulk-account-heading h2{font-size:18px;letter-spacing:-.025em;margin:4px 0 5px}
+.workspace-shell .bulk-account-heading p{margin:0;color:var(--muted);font-size:12px;line-height:1.6}
+.workspace-shell .bulk-account-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:end}
+.workspace-shell .bulk-account-form>label{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:12px;font-weight:650;color:var(--ink)}
+.workspace-shell .bulk-account-form input,.workspace-shell .bulk-account-form select{width:100%;min-width:0;min-height:42px;border:1px solid var(--line);border-radius:10px;padding:0 11px;background:var(--paper);color:var(--ink);font:inherit;font-size:13px}
+.workspace-shell .bulk-account-form label small{font-size:10px;font-weight:450;color:var(--muted);line-height:1.4}
+.workspace-shell .bulk-account-submit{grid-column:1/-1;display:flex;justify-content:flex-end}
+.workspace-shell .bulk-account-note{display:flex;align-items:flex-start;gap:9px;padding:12px 13px;border:1px solid var(--line);border-radius:11px;background:var(--canvas);color:var(--muted);font-size:11px;line-height:1.6}
+.workspace-shell .bulk-account-note svg{flex:0 0 auto;margin-top:1px}
+.workspace-shell .bulk-account-result{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--line)}
+.workspace-shell .bulk-account-result b{font-size:13px}
+.workspace-shell .bulk-account-result p{margin:4px 0 0;font-size:11px;color:var(--muted)}
+.workspace-shell .bulk-account-failures{border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--muted);font-size:12px}
+.workspace-shell .bulk-account-failures ul{margin:8px 0 0;padding-left:18px}
+@media(max-width:900px){.workspace-shell .bulk-account-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.workspace-shell .bulk-account-panel{padding:16px}.workspace-shell .bulk-account-form{grid-template-columns:1fr}.workspace-shell .bulk-account-submit{justify-content:stretch}.workspace-shell .bulk-account-submit button{width:100%}.workspace-shell .bulk-account-result{align-items:stretch}.workspace-shell .bulk-account-result button{width:100%}}
