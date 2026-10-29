@@ -229,3 +229,17 @@ html[data-theme="dark"] .workspace-shell .workspace-signout:hover{background:#39
  .workspace-shell .table-filters{width:100%}.workspace-shell .table-filters select{flex:1;min-width:0}
 }
 @media(prefers-reduced-motion:reduce){.workspace-shell *, .workspace-shell *::before, .workspace-shell *::after{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+
+/* Per-rating context and AI feedback synthesis */
+.workspace-shell .rating-reason{display:flex;flex-direction:column;gap:6px;margin:10px 0 2px;max-width:100%}
+.workspace-shell .rating-reason>span{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:var(--muted)}
+.workspace-shell .rating-reason>span small{font-size:10px;font-weight:500}
+.workspace-shell .rating-reason textarea{width:100%;min-height:54px;resize:vertical;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:inherit;font-size:12px;line-height:1.5}
+.workspace-shell .rating-reason textarea:focus{outline:2px solid var(--accent,#477a54);outline-offset:1px}
+.workspace-shell .rating-reason textarea::placeholder{color:var(--muted)}
+.workspace-shell .ai-review-panel{display:grid;gap:14px}
+.workspace-shell .ai-review-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.workspace-shell .ai-review-toolbar p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.workspace-shell .ai-review-result{white-space:pre-wrap;line-height:1.75;font-size:13px;color:var(--ink);padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--canvas)}
+.workspace-shell .ai-review-reasons{white-space:pre-wrap;line-height:1.65;font-size:12px;color:var(--muted);max-height:260px;overflow:auto}
