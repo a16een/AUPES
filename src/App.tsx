@@ -2,7 +2,7 @@ import { FormEvent, createContext, useContext, useEffect, useMemo, useRef, useSt
 import {
   Activity, ArrowRight, ArrowUpRight, Award, Bell, BookOpen, BookMarked, Building2, CalendarDays,
   ChartNoAxesCombined, Check, CheckCircle2, ChevronDown, ChevronRight, CircleHelp, Bot, MessageCircle, Send,
-  ClipboardCheck, Clock3, ExternalLink, FileText, FlaskConical, Globe2, GraduationCap, Handshake, Leaf, Lightbulb,
+  ClipboardCheck, Clock3, ExternalLink, FileText, FileDown, FlaskConical, Globe2, GraduationCap, Handshake, Leaf, Lightbulb,
   Languages, LayoutDashboard, LoaderCircle, LockKeyhole, LogOut, Mail, MapPin, Menu, Moon, Plus,
   Scale, Search, Settings, ShieldCheck, Sparkles, Sprout, Sun, UserRound, Users, X
 } from "lucide-react";
@@ -378,7 +378,7 @@ function AppShell({session,profile,onSignOut}:{session:Session;profile:Profile;o
     {page==="overview"&&<Dashboard profile={profile} mine={mine} assignments={assignments} people={people} summaries={summaries} admin={admin} busy={busy} navigate={navigate} start={a=>navigate("fill",a)} onUser={()=>setUserModal(true)} onAssignment={()=>setAssignmentModal(true)}/>}
     {page==="evaluations"&&!admin&&<EvaluationList assignments={mine} busy={busy} start={a=>navigate("fill",a)}/>}
     {page==="results"&&<ResultsPage summaries={summaries} people={people} profile={profile} admin={admin}/>}
-    {page==="accounts"&&admin&&<AccountsPage people={people} busy={busy} onCreate={()=>setUserModal(true)}/>}
+    {page==="accounts"&&admin&&<AccountsPage people={people} busy={busy} session={session} onCreate={()=>setUserModal(true)}/>}
     {page==="assignments"&&admin&&<AssignmentsPage assignments={assignments} busy={busy} onCreate={()=>setAssignmentModal(true)}/>}
     {page==="fill"&&activeAssignment&&<EvaluationForm assignment={activeAssignment} onCancel={()=>navigate("evaluations")} onSubmitted={complete}/>}
    </main>
@@ -430,12 +430,71 @@ function ResultsPage({summaries,people,profile,admin}:{summaries:SummaryRow[];pe
  </div>;
 }
 
-function AccountsPage({people,busy,onCreate}:{people:Profile[];busy:boolean;onCreate:()=>void}){
+type GeneratedAccount={email:string;password:string;full_name:string;role:string};
+function downloadCredentialsPdf(accounts:GeneratedAccount[],role:string){
+ const safe=(value:string)=>value.replace(/[^\x20-\x7E]/g," ").replace(/\\/g,"\\\\").replace(/\(/g,"\\(").replace(/\)/g,"\\)");
+ const pages:GeneratedAccount[][]=[];for(let i=0;i<accounts.length;i+=34)pages.push(accounts.slice(i,i+34));
+ const objects:string[]=[];
+ objects[1]="<< /Type /Catalog /Pages 2 0 R >>";
+ objects[3]="<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>";
+ const pageIds=pages.map((_,i)=>4+i*2);
+ objects[2]="<< /Type /Pages /Kids ["+pageIds.map(id=>id+" 0 R").join(" ")+"] /Count "+pages.length+" >>";
+ pages.forEach((rows,index)=>{
+  const pageId=4+index*2,streamId=pageId+1;
+  const lines:string[]=[];
+  const put=(x:number,y:number,size:number,value:string)=>lines.push("BT /F1 "+size+" Tf 1 0 0 1 "+x+" "+y+" Tm ("+safe(value)+") Tj ET");
+  put(40,752,16,"AUPES - Generated account credentials");
+  put(40,733,9,"Role: "+roleLabel(role)+" | Accounts: "+accounts.length+" | Page "+(index+1)+" of "+pages.length);
+  put(40,704,9,"EMAIL / LOGIN");put(345,704,9,"TEMPORARY PASSWORD");
+  lines.push("0.75 w 40 696 m 572 696 l S");
+  rows.forEach((account,rowIndex)=>{const y=678-rowIndex*18;put(40,y,9,account.email);put(345,y,9,account.password);lines.push("0.6 w 40 "+(y-5)+" m 572 "+(y-5)+" l S");});
+  put(40,42,8,"Keep this document private. Share each credential only with its intended account holder.");
+  const stream=lines.join("\n");
+  objects[pageId]="<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents "+streamId+" 0 R >>";
+  objects[streamId]="<< /Length "+stream.length+" >>\nstream\n"+stream+"\nendstream";
+ });
+ let pdf="%PDF-1.4\n";const offsets=[0];
+ for(let i=1;i<objects.length;i++){offsets[i]=pdf.length;pdf+=i+" 0 obj\n"+objects[i]+"\nendobj\n";}
+ const xref=pdf.length;pdf+="xref\n0 "+objects.length+"\n0000000000 65535 f \n";
+ for(let i=1;i<objects.length;i++)pdf+=String(offsets[i]).padStart(10,"0")+" 00000 n \n";
+ pdf+="trailer\n<< /Size "+objects.length+" /Root 1 0 R >>\nstartxref\n"+xref+"\n%%EOF";
+ const blob=new Blob([pdf],{type:"application/pdf"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="aupes-"+role+"-accounts-"+new Date().toISOString().slice(0,10)+".pdf";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+function AccountsPage({people,busy,session,onCreate}:{people:Profile[];busy:boolean;session:Session;onCreate:()=>void}){
  const {t}=useAppSettings();const [query,setQuery]=useState("");const [roleFilter,setRoleFilter]=useState("all");const [statusFilter,setStatusFilter]=useState("all");
+ const [count,setCount]=useState("40");const [bulkRole,setBulkRole]=useState("student");const [department,setDepartment]=useState("");const [college,setCollege]=useState("");const [generating,setGenerating]=useState(false);const [bulkError,setBulkError]=useState("");const [bulkNotice,setBulkNotice]=useState("");const [generated,setGenerated]=useState<GeneratedAccount[]>([]);const [failures,setFailures]=useState<string[]>([]);
  const roles=[...new Set(people.map(p=>p.role))].sort();
  const filtered=people.filter(p=>[p.full_name,p.email,p.department,p.college,roleLabel(p.role)].some(v=>v?.toLowerCase().includes(query.toLowerCase()))&&(roleFilter==="all"||p.role===roleFilter)&&(statusFilter==="all"||(statusFilter==="active"?p.is_active:!p.is_active)));
+ async function generateBulk(e:FormEvent){
+  e.preventDefault();setBulkError("");setBulkNotice("");setFailures([]);setGenerated([]);
+  const amount=Number(count);if(!Number.isInteger(amount)||amount<1||amount>200){setBulkError(t("Choose a whole number between 1 and 200."));return;}
+  setGenerating(true);
+  try{
+   const response=await fetch(SUPABASE_URL+"/functions/v1/admin-create-user",{method:"POST",headers:{Authorization:"Bearer "+session.access_token,apikey:SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({action:"bulk",count:amount,role:bulkRole,department,college})});
+   const result=await response.json();if(!response.ok&&!(result.created?.length))throw new Error(result.error||t("Unable to generate accounts."));
+   const accounts=(result.created??[]) as GeneratedAccount[];setGenerated(accounts);setFailures(result.failures??[]);
+   if(accounts.length){downloadCredentialsPdf(accounts,bulkRole);setBulkNotice(t("Created")+" "+accounts.length+" "+t("of")+" "+amount+" "+t("accounts")+". "+t("The credentials PDF has been downloaded."));window.dispatchEvent(new CustomEvent("aupes:accounts-created"));}
+   else setBulkError(t("No accounts were created.")+(result.error?" "+result.error:""));
+  }catch(err){setBulkError(err instanceof Error?err.message:t("Unable to generate accounts."));}
+  finally{setGenerating(false);}
+ }
  return <div className="page-stack">
   <section className="page-title-row"><div><small className="kicker">{t("ACCESS & IDENTITY")}</small><h1>{t("Account management")}</h1><p>{t("Manage accounts by role and status, and provision access for university staff and students.")}</p></div><Button onClick={onCreate}><Plus size={16}/>{t("Create account")}</Button></section>
+  <section className="panel bulk-account-panel">
+   <div className="bulk-account-heading"><span className="bulk-account-icon"><FileDown size={20}/></span><div><small className="kicker">{t("BULK PROVISIONING")}</small><h2>{t("Generate account credentials")}</h2><p>{t("Create multiple real accounts in one step and download their login details as a PDF.")}</p></div></div>
+   <form className="bulk-account-form" onSubmit={generateBulk}>
+    <label>{t("Number of accounts")}<input type="number" min="1" max="200" step="1" required value={count} onChange={e=>setCount(e.target.value)}/><small>{t("Generate 1 to 200 accounts per batch.")}</small></label>
+    <label>{t("Account role")}<select value={bulkRole} onChange={e=>setBulkRole(e.target.value)}>{ROLE_OPTIONS.filter(r=>r.value!=="admin").map(r=><option key={r.value} value={r.value}>{t(r.label)}</option>)}</select></label>
+    <label>{t("Department")}<input value={department} onChange={e=>setDepartment(e.target.value)} placeholder={t("Optional")}/></label>
+    <label>{t("College / school")}<input value={college} onChange={e=>setCollege(e.target.value)} placeholder={t("Optional")}/></label>
+    <div className="bulk-account-submit"><Button type="submit" disabled={generating}>{generating?<LoaderCircle size={16} className="spin"/>:<Sparkles size={16}/>} {generating?t("Generating accounts…"):t("Generate and download PDF")}</Button></div>
+   </form>
+   <div className="bulk-account-note"><ShieldCheck size={16}/><span>{t("Each account is created in Supabase Auth with a matching AUPES profile. Email usernames and temporary passwords are numeric. Credentials are returned once and are not saved in the database as plaintext.")}</span></div>
+   {bulkNotice&&<Notice notice={{type:"success",text:bulkNotice}}/>}
+   {bulkError&&<Notice notice={{type:"error",text:bulkError}}/>}
+   {failures.length>0&&<div className="bulk-account-failures"><b>{t("Some accounts could not be created")}</b><ul>{failures.slice(0,8).map((failure,i)=><li key={i}>{failure}</li>)}</ul></div>}
+   {generated.length>0&&<div className="bulk-account-result"><div><b>{generated.length} {t("credentials ready")}</b><p>{t("Keep the PDF secure. It contains passwords that grant access to real accounts.")}</p></div><Button variant="outline" onClick={()=>downloadCredentialsPdf(generated,bulkRole)}><FileDown size={16}/>{t("Download PDF again")}</Button></div>}
+  </section>
   <section className="panel workspace-table-panel"><div className="toolbar filter-toolbar">
    <label className="search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t("Search name, email or department…")}/></label>
    <div className="table-filters"><select aria-label={t("Filter by role")} value={roleFilter} onChange={e=>setRoleFilter(e.target.value)}><option value="all">{t("All roles")}</option>{roles.map(role=><option key={role} value={role}>{t(roleLabel(role))}</option>)}</select><select aria-label={t("Filter by status")} value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}><option value="all">{t("All statuses")}</option><option value="active">{t("Active")}</option><option value="inactive">{t("Inactive")}</option></select></div>
