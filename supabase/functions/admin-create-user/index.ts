@@ -29,7 +29,7 @@ Deno.serve(async(req:Request)=>{
     for(let attempt=0;attempt<4&&!createdAccount;attempt++){
      const email=digits(10)+"@accounts.aupes.edu.et";
      const password=digits(12);
-     const full_name=role.replaceAll("_"," ").replace(/\\b\\w/g,(letter:string)=>letter.toUpperCase())+" Account "+String(i+1).padStart(3,"0");
+     const full_name=role.replaceAll("_"," ").replace(/\b\w/g,(letter:string)=>letter.toUpperCase())+" Account "+String(i+1).padStart(3,"0");
      const {data:created,error:createError}=await adminClient.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name}});
      if(createError||!created.user){lastError=createError?.message??lastError;if(createError?.message?.toLowerCase().includes("already"))continue;break;}
      const {error:profileError}=await adminClient.from("profiles").update({full_name,email,role,department,college,is_active:true,updated_at:new Date().toISOString()}).eq("id",created.user.id);
